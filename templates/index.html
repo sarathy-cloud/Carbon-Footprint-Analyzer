@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Base theme: Dark background, green text */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #4ade80; /* green-400 */
+        }
+        
+        /* Custom scrollbar for dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #34d399; /* emerald-400 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981; /* emerald-600 */
+        }
+
+        /* Helper class to hide/show pages */
+        .page-section {
+            display: none; /* Hidden by default */
+        }
+        
+        /* Custom styles for inputs */
+        .dark-input, .dark-select {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+            color: #e2e8f0; /* slate-200 */
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .dark-input:focus, .dark-select:focus {
+            outline: none;
+            border-color: #34d399; /* emerald-400 */
+            box-shadow: 0 0 0 2px #10b981; /* emerald-600 */
+        }
+        .dark-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.25em;
+        }
+        
+        /* Custom button style */
+        .btn-primary {
+            background-color: #10b981; /* emerald-600 */
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary:hover {
+            background-color: #059669; /* emerald-700 */
+        }
+        .btn-primary:disabled {
+            background-color: #047857; /* emerald-800 */
+            color: #a3f3d4;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #334155; /* slate-700 */
+            color: #e2e8f0; /* slate-200 */
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #475569; /* slate-600 */
+        }
+
+        /* Custom card style */
+        .dark-card {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #a3f3d4; /* emerald-200 */
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+    </style>
+</head>
+<body class="bg-slate-900 font-sans antialiased text-green-400">
+
+    <!-- This div will contain all "pages" -->
+    <div class="container mx-auto max-w-7xl p-4 md:p-8">
+
+        <!-- ============================================ -->
+        <!-- PAGE: LOGIN                                  -->
+        <!-- ============================================ -->
+        <div id="page-login" class="page-section">
+            <div class="flex min-h-[80vh] items-center justify-center">
+                <div class="w-full max-w-md">
+                    <div class="dark-card">
+                        <h1 class="text-3xl font-bold text-center text-emerald-400 mb-2">Carbon Dashboard</h1>
+                        <p class="text-center text-slate-400 mb-8">Login to continue</p>
+                        
+                        <form id="login-form">
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="username" class="block text-sm font-medium text-emerald-300 mb-2">Company Name</label>
+                                    <input type="text" id="username" class="dark-input" placeholder="Enter your company name" required>
+                                </div>
+                                <button type="submit" id="login-button" class="btn-primary w-full">
+                                    <span class="btn-text">Login</span>
+                                </button>
+                                <p id="login-error" class="text-red-400 text-sm text-center hidden"></p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Registration Modal (hidden by default) -->
+            <div id="register-modal" class="modal-overlay">
+                <div class="dark-card w-full max-w-md">
+                    <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Register New User</h2>
+                    <p class="text-slate-300 mb-6">User '<span id="register-username" class="font-bold"></span>' not found. Please register by selecting your primary sector.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="register-sector" class="block text-sm font-medium text-emerald-300 mb-2">Select your industry sector:</label>
+                            <!-- This select is populated by JS -->
+                            <select id="register-sector" class="dark-select">
+                                <option value="">-- Please choose a sector --</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-4">
+                            <button id="register-cancel-btn" class="btn-secondary w-full">Cancel</button>
+                            <button id="register-confirm-btn" class="btn-primary w-full">
+                                <span class="btn-text">Register & Login</span>
+                            </button>
+                        </div>
+                        <p id="register-error" class="text-red-400 text-sm text-center hidden"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- PAGE: DASHBOARD                              -->
+        <!-- ============================================ -->
+        <div id="page-dashboard" class="page-section">
+            <!-- Header -->
+            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-500 to-green-500 bg-clip-text text-transparent">Dashboard</h1>
+                    <p class="text-lg text-slate-400">Welcome, <span id="dashboard-username" class="font-semibold text-emerald-400"></span></p>
+                </div>
+                <div class="flex gap-4">
+                    <button id="dashboard-add-btn" class="btn-primary">Add Weekly Data</button>
+                    <button id="dashboard-logout-btn" class="btn-secondary">Logout</button>
+                </div>
+            </header>
+
+            <!-- Main Content Grid -->
+            <div id="dashboard-content" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Left Column: History -->
+                    <div class="lg:col-span-1 dark-card h-full">
+                        <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Recent History</h2>
+                        <div id="history-table-container" class="space-y-3">
+                            <!-- JS will populate this -->
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Main Stats & Recommendations -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <!-- Overall Stats -->
+                        <div class="dark-card">
+                            <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Most Recent Week's Emissions</h2>
+                            <div id="dashboard-stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <!-- JS will populate this -->
+                            </div>
+                            <!-- Chart for scopes -->
+                            <div class="w-full max-w-sm mx-auto mt-6">
+                                <canvas id="dashboardScopeChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommendations -->
+                        <div class="dark-card">
+                            <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Data-Driven Recommendations</h2>
+                            <div id="recommendations-container" class="space-y-4">
+                                <!-- JS will populate this -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading State for Dashboard -->
+            <div id="dashboard-loading" class="text-center py-20">
+                <div class="spinner" style="margin: 0 auto; width: 40px; height: 40px; border-width: 4px;"></div>
+                <p class="text-lg text-slate-400 mt-4">Loading dashboard data...</p>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- PAGE: ADD DATA                               -->
+        <!-- ============================================ -->
+        <div id="page-add" class="page-section">
+            <!-- Header -->
+            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-500 to-green-500 bg-clip-text text-transparent">Add Weekly Data</h1>
+                    <p class="text-lg text-slate-400">Fill in your data for the week.</p>
+                </div>
+                <button id="add-back-btn" class="btn-secondary">
+                    &larr; Back to Dashboard
+                </button>
+            </header>
+            
+            <!-- Main Content Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Left Column: Inputs -->
+                <div class="lg:col-span-1 dark-card h-full">
+                    <h2 class="text-2xl font-semibold text-emerald-400 mb-6">1. Your Inputs</h2>
+                    
+                    <!-- Sector Selection -->
+                    <div class="mb-6">
+                        <label for="sectorSelector" class="block text-sm font-medium text-emerald-300 mb-2">Select your industry sector:</label>
+                        <select id="sectorSelector" class="dark-select">
+                            <!-- Options are populated by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Forms Container -->
+                    <div id="formsContainer">
+                        <!-- Manufacturing Form -->
+                        <form id="form-manufacturing" class="hidden space-y-4 form-section-inputs">
+                            <!-- Form content will be dynamically generated by JS -->
+                        </form>
+                        
+                        <!-- Retail Form -->
+                        <form id="form-retail" class="hidden space-y-4 form-section-inputs">
+                            <!-- Form content will be dynamically generated by JS -->
+                        </form>
+
+                        <!-- IT Form -->
+                        <form id="form-it" class="hidden space-y-4 form-section-inputs">
+                            <!-- Form content will be dynamically generated by JS -->
+                        </form>
+
+                        <!-- Hospitality Form -->
+                        <form id="form-hospitality" class="hidden space-y-4 form-section-inputs">
+                            <!-- Form content will be dynamically generated by JS -->
+                        </form>
+
+                        <!-- Healthcare Form -->
+                        <form id="form-healthcare" class="hidden space-y-4 form-section-inputs">
+                            <!-- Form content will be dynamically generated by JS -->
+                        </form>
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <button id="saveButton" class="hidden btn-primary w-full mt-6">
+                        <span class="btn-text">Calculate & Save Week's Data</span>
+                    </button>
+                </div>
+
+                <!-- Right Column: Results -->
+                <div class="lg:col-span-2">
+                    <!-- Results Container -->
+                    <div id="resultsContainer" class="hidden dark-card">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-2xl font-semibold text-emerald-400">2. Your Results</h2>
+                                <p id="resultsSector" class="text-slate-400"></p>
+                            </div>
+                            <button id="resetButton" class="btn-secondary text-sm">
+                                Clear Form
+                            </button>
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <div class="bg-emerald-900 border-l-4 border-emerald-500 p-6 rounded-lg">
+                                <h3 class="text-sm font-medium text-emerald-300 uppercase tracking-wider">Total Weekly Footprint</h3>
+                                <p id="totalTonnes" class="text-4xl font-extrabold text-emerald-100 mt-2">0.0 tCO2e</p>
+                                <p id="totalKg" class="text-sm text-emerald-300">0 kg CO2e</p>
+                            </div>
+                            <div class="bg-slate-700 p-6 rounded-lg shadow-inner">
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-300">Scope 1 (Direct)</span>
+                                        <span id="scope1Tonnes" class="font-bold text-slate-100">0.0 tCO2e</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-300">Scope 2 (Energy)</span>
+                                        <span id="scope2Tonnes" class="font-bold text-slate-100">0.0 tCO2e</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-300">Scope 3 (Value Chain)</span>
+                                        <span id="scope3Tonnes" class="font-bold text-slate-100">0.0 tCO2e</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-slate-700 p-6 rounded-lg">
+                                <h4 class="text-lg font-semibold text-slate-100 mb-4 text-center">Emissions by Scope</h4>
+                                <div class="w-full max-w-xs mx-auto">
+                                    <canvas id="scopeChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-slate-700 p-6 rounded-lg">
+                                <h4 class="text-lg font-semibold text-slate-100 mb-4 text-center">Top 5 Emission Sources</h4>
+                                <canvas id="topSourcesChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Breakdown -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-slate-100 mb-4">Detailed Breakdown (kg CO2e)</h4>
+                            <div id="detailedResults" class="space-y-2 text-sm text-slate-300">
+                                <!-- JS will populate this -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Initial Placeholder -->
+                    <div id="placeholder" class="flex items-center justify-center dark-card h-full min-h-[500px]">
+                        <div class="text-center text-slate-500">
+                            <svg class="mx-auto h-12 w-12 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657L13.414 14.414m-2.828-2.828l-1.414-1.414L12 12l-1.414-1.414-1.414 1.414L6.343 9.172A4.5 4.5 0 0112 4.5c1.757 0 3.323.99 4.121 2.472L19.5 12 17.657 18.657zM12 4.5a4.5 4.5 0 014.5 4.5c0 1.757-.99 3.323-2.472 4.121m-6.356 0A4.5 4.5 0 014.5 9c0-1.757.99-3.323 2.472-4.121m6.356 0l-1.414 1.414m-4.242 0L12 7.328m0 0L10.586 5.914" />
+                            </svg>
+                            <h3 class="mt-2 text-lg font-medium text-emerald-400">Results will appear here</h3>
+                            <p class="mt-1 text-sm">Fill in the form and click "Calculate & Save" to see the weekly breakdown.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success Modal (hidden by default) -->
+            <div id="success-modal" class="modal-overlay">
+                <div class="dark-card w-full max-w-md text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-200">
+                        <svg class="h-6 w-6 text-green-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-semibold text-emerald-400 mt-4 mb-2">Data Saved!</h2>
+                    <p class="text-slate-300 mb-6">Your weekly data has been successfully saved.</p>
+                    <button id="success-ok-btn" class="btn-primary w-full">OK</button>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================
+        // APP STATE & API
+        // ============================================
+        let currentUser = null;
+        let userSector = null; // Store the user's default sector
+        
+        // Chart instances
+        let addDataScopeChart = null;
+        let addDataTopSourcesChart = null;
+        let dashboardScopeChart = null;
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('visible');
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('visible');
+        }
+        
+        // Helper to show/hide loading spinners on buttons
+        function setButtonLoading(button, isLoading) {
+            const textEl = button.querySelector('.btn-text');
+            if (isLoading) {
+                button.disabled = true;
+                textEl.insertAdjacentHTML('beforebegin', '<div class="spinner"></div>');
+            } else {
+                button.disabled = false;
+                const spinner = button.querySelector('.spinner');
+                if (spinner) {
+                    spinner.remove();
+                }
+            }
+        }
+
+        // ============================================
+        // PAGE NAVIGATION
+        // ============================================
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.style.display = 'none';
+            });
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.style.display = 'block';
+            }
+            
+            // Re-render pages that need dynamic content
+            if (pageId === 'page-dashboard') {
+                // Don't render yet, fetch data first
+                if (!currentUser) {
+                    navigateTo('page-login'); // Security check
+                    return;
+                }
+                document.getElementById('dashboard-content').classList.add('hidden');
+                document.getElementById('dashboard-loading').classList.remove('hidden');
+                fetchDashboardData();
+            } else if (pageId === 'page-add') {
+                renderAddDataPage();
+            } else if (pageId === 'page-login') {
+                document.getElementById('username').value = '';
+                document.getElementById('login-error').classList.add('hidden');
+            }
+        }
+        
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load dashboard data.');
+                }
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // Data is fetched, now render the page
+                    renderDashboardPage(data.dashboard_data);
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                // Handle error (e.g., show error message on dashboard page)
+                document.getElementById('dashboard-loading').innerText = 'Error loading data. Please try again.';
+            }
+        }
+
+
+        // ============================================
+        // CONSTANTS & EMISSION FACTORS (from user)
+        // ============================================
+        Chart.defaults.color = '#cbd5e1'; // slate-300
+        Chart.defaults.borderColor = '#334155'; // slate-700
+
+        const PRICE_DIESEL_INR = 90.0;
+        const INR_TO_USD_RATE = 0.012;
+        // SCOPE 1
+        const EF_DIESEL = 2.68;
+        const EF_NATURAL_GAS = 2.02;
+        const EF_LPG = 3.01;
+        const EF_PETROL = 2.31;
+        const EF_CNG = 2.75;
+        const GWP_R410A = 2088;
+        const GWP_R134A = 1430;
+        const GWP_R404A = 3922;
+        const GWP_N2O = 265;
+        // SCOPE 2
+        const EF_ELECTRICITY_INDIA = 0.82;
+        // SCOPE 3
+        const EF_SPEND_RAW_MATERIALS = 1.5;
+        const EF_SPEND_LOGISTICS = 0.9;
+        const EF_SPEND_PACKAGING = 1.1;
+        const EF_SPEND_TEXTILES = 1.2;
+        const EF_SPEND_IT_EQUIPMENT = 1.3;
+        const EF_SPEND_CLOUD = 0.7;
+        const EF_SPEND_SERVICES = 0.5;
+        const EF_SPEND_MEDICAL = 1.4;
+        const EF_TRAVEL_SPEND = 0.15; // Per $1 USD
+        const EF_TRUCK_TRANSPORT = 0.12;
+        const EF_RAIL_TRANSPORT = 0.025;
+        const EF_SHIP_TRANSPORT = 0.01;
+        const EF_WASTE_LANDFILL = 0.8;
+        const EF_WASTE_INCINERATION = 0.5;
+        const EF_WASTE_RECYCLING = 0.05;
+
+        // ============================================
+        // FORM TEMPLATES (from user, modified for theme)
+        // ============================================
+
+        // Helper to create an input field
+        function createInput(id, label, type = 'number', unit = '', placeholder = '0') {
+            return `
+                <div>
+                    <label for="${id}" class="block text-sm font-medium text-emerald-300">${label}</label>
+                    <div class="mt-1 relative">
+                        <input type="${type}" id="${id}" name="${id}" class="dark-input pr-16" placeholder="${placeholder}">
+                        ${unit ? `<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-slate-400 sm:text-sm">${unit}</span></div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper to create a select/dropdown
+        function createSelect(id, label, options) {
+            let optionsHtml = options.map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('');
+            return `
+                <div>
+                    <label for="${id}" class="block text-sm font-medium text-emerald-300">${label}</label>
+                    <select id="${id}" name="${id}" class="dark-select mt-1">
+                        ${optionsHtml}
+                    </select>
+                </div>
+            `;
+        }
+        
+        // Helper to create a section title
+        function createSectionTitle(title) {
+            return `<h3 class="text-lg font-semibold text-emerald-400 border-b border-slate-600 pb-2 mb-3 mt-4">${title}</h3>`;
+        }
+
+        // Define form structures
+        const forms = {
+            manufacturing: {
+                name: 'Manufacturing & Production',
+                inputs: [
+                    createSectionTitle('Scope 1: Direct Emissions'),
+                    createSelect('s1_fuel_type', 'Heating/Processing Fuel', [
+                        { value: 'natural_gas', text: 'Natural Gas' },
+                        { value: 'diesel', text: 'Diesel' },
+                        { value: 'lpg', text: 'LPG' }
+                    ]),
+                    createInput('s1_fuel_consumption', 'Weekly Fuel Consumption', 'number', 'SCM/liters/kg'),
+                    createInput('s1_vehicle_fuel_spend', `Weekly Vehicle Diesel Spend (INR)`, 'number', 'INR'),
+                    createSelect('s1_refrigerant_type', 'Refrigerant Type', [
+                        { value: GWP_R410A, text: 'R-410A' },
+                        { value: GWP_R134A, text: 'R-134a' },
+                        { value: GWP_R404A, text: 'R-404A' },
+                        { value: 0, text: 'None / N/A' }
+                    ]),
+                    createInput('s1_refrigerant_amount', 'Weekly Refrigerant Recharged', 'number', 'kg'),
+                    
+                    createSectionTitle('Scope 2: Purchased Energy'),
+                    createInput('s2_electricity', 'Weekly Electricity Consumption', 'number', 'kWh'),
+                    
+                    createSectionTitle('Scope 3: Value Chain'),
+                    createInput('s3_raw_materials_spend', 'Weekly Raw Materials Spend', 'number', 'INR'),
+                    createSelect('s3_logistics_type', 'Logistics Data Type', [
+                        { value: 'spend', text: 'By Spend' },
+                        { value: 'distance', text: 'By Distance' }
+                    ]),
+                    createInput('s3_logistics_spend', 'Weekly Logistics Spend (if by spend)', 'number', 'INR'),
+                    createInput('s3_logistics_distance', 'Weekly Tonne-km (if by distance)', 'number', 't-km'),
+                    createSelect('s3_transport_mode', 'Primary Transport Mode (if by distance)', [
+                        { value: EF_TRUCK_TRANSPORT, text: 'Truck' },
+                        { value: EF_RAIL_TRANSPORT, text: 'Rail' },
+                        { value: EF_SHIP_TRANSPORT, text: 'Ship' }
+                    ]),
+                    createInput('s3_waste_amount', 'Weekly Waste Generated', 'number', 'tonnes'),
+                    createSelect('s3_waste_method', 'Waste Disposal Method', [
+                        { value: EF_WASTE_LANDFILL, text: 'Landfill' },
+                        { value: EF_WASTE_RECYCLING, text: 'Recycling' },
+                        { value: EF_WASTE_INCINERATION, text: 'Incineration' }
+                    ]),
+                    createInput('s3_travel_spend', 'Weekly Business Travel Spend', 'number', 'INR'),
+                ]
+            },
+            retail: {
+                name: 'Retail & E-commerce',
+                inputs: [
+                    createSectionTitle('Scope 1: Direct Emissions'),
+                    createInput('s1_vehicle_fuel_spend', `Weekly Delivery Diesel Spend (INR)`, 'number', 'INR'),
+                    createSelect('s1_refrigerant_type', 'Refrigerant Type', [
+                        { value: GWP_R410A, text: 'R-410A' },
+                        { value: GWP_R134A, text: 'R-134a' },
+                        { value: GWP_R404A, text: 'R-404A' },
+                        { value: 0, text: 'None / N/A' }
+                    ]),
+                    createInput('s1_refrigerant_amount', 'Weekly Refrigerant Recharged', 'number', 'kg'), 
+
+                    createSectionTitle('Scope 2: Purchased Energy'),
+                    createInput('s2_store_electricity', 'Total Weekly Store Electricity', 'number', 'kWh'),
+                    createInput('s2_warehouse_electricity', 'Weekly Warehouse Electricity', 'number', 'kWh'),
+
+                    createSectionTitle('Scope 3: Value Chain'),
+                    createSelect('s3_retail_category', 'Retail Category', [
+                        { value: 'food', text: 'Food/Grocery' },
+                        { value: 'fashion', text: 'Apparel/Fashion' },
+                        { value: 'electronics', text: 'Electronics' },
+                        { value: 'general', text: 'General Merchandise' }
+                    ]),
+                    createInput('s3_procurement_spend', 'Weekly Procurement Spend (Non-Food)', 'number', 'INR'),
+                    createInput('s3_meat_spend', 'Weekly Meat Spend (Food only)', 'number', 'INR'),
+                    createInput('s3_dairy_spend', 'Weekly Dairy Spend (Food only)', 'number', 'INR'),
+                    createInput('s3_veg_spend', 'Weekly Vegetable Spend (Food only)', 'number', 'INR'),
+                    createInput('s3_packaging_spend', 'Weekly Packaging Spend', 'number', 'INR'),
+                    createInput('s3_logistics_spend', 'Weekly Inbound Logistics Spend', 'number', 'INR'),
+                    createInput('s3_waste_amount', 'Weekly Store Waste', 'number', 'tonnes'),
+                    createSelect('s3_waste_method', 'Waste Disposal Method', [
+                        { value: EF_WASTE_LANDFILL, text: 'Landfill' },
+                        { value: EF_WASTE_RECYCLING, text: 'Recycling' },
+                        { value: EF_WASTE_INCINERATION, text: 'Incineration' }
+                    ]),
+                    createInput('s3_travel_spend', 'Weekly Business Travel Spend', 'number', 'INR'),
+                ]
+            },
+            it: {
+                name: 'IT & Technology Services',
+                inputs: [
+                    createSectionTitle('Scope 1: Direct Emissions'),
+                    createInput('s1_generator_fuel_spend', `Weekly Generator Diesel Spend (INR)`, 'number', 'INR'),
+                    createInput('s1_refrigerant_amount', 'Weekly Office AC Refrigerant Recharged', 'number', 'kg'), 
+
+                    createSectionTitle('Scope 2: Purchased Energy'),
+                    createInput('s2_office_electricity', 'Weekly Office Electricity', 'number', 'kWh'),
+                    createInput('s2_datacenter_electricity', 'Weekly Data Center Electricity (if any)', 'number', 'kWh'),
+
+                    createSectionTitle('Scope 3: Value Chain'),
+                    createInput('s3_laptops_purchased', 'Laptops Purchased Weekly', 'number', 'units'), 
+                    createInput('s3_servers_purchased', 'Servers Purchased Weekly', 'number', 'units'), 
+                    createInput('s3_cloud_spend', 'Weekly Cloud Spend', 'number', 'INR'),
+                    createInput('s3_ewaste', 'Weekly E-Waste', 'number', 'kg'), 
+                    createInput('s3_travel_spend', 'Weekly Business Travel Spend', 'number', 'INR'),
+                ]
+            },
+            hospitality: {
+                name: 'Hospitality & Food Services',
+                inputs: [
+                    createSectionTitle('Scope 1: Direct Emissions'),
+                    createSelect('s1_cooking_fuel_type', 'Cooking Fuel Type', [
+                        { value: 'lpg', text: 'LPG' },
+                        { value: 'natural_gas', text: 'Natural Gas' }
+                    ]),
+                    createInput('s1_cooking_fuel', 'Weekly Cooking Fuel Consumption', 'number', 'kg or SCM'),
+                    createInput('s1_vehicle_fuel_spend', `Weekly Delivery Fuel Spend (INR)`, 'number', 'INR'),
+                    createInput('s1_refrigerant_amount', 'Weekly Refrigeration Recharged', 'number', 'kg'), 
+
+                    createSectionTitle('Scope 2: Purchased Energy'),
+                    createInput('s2_electricity', 'Weekly Electricity Consumption', 'number', 'kWh'),
+
+                    createSectionTitle('Scope 3: Value Chain'),
+                    createInput('s3_meat_spend', 'Weekly Meat Spend', 'number', 'INR'),
+                    createInput('s3_dairy_spend', 'Weekly Dairy Spend', 'number', 'INR'),
+                    createInput('s3_veg_spend', 'Weekly Vegetable Spend', 'number', 'INR'),
+                    createInput('s3_grains_spend', 'Weekly Grains Spend', 'number', 'INR'),
+                    createInput('s3_supplies_spend', 'Weekly Other Supplies Spend', 'number', 'INR'),
+                    createInput('s3_food_waste', 'Weekly Food Waste', 'number', 'tonnes'),
+                    createSelect('s3_waste_method', 'Waste Disposal Method', [
+                        { value: EF_WASTE_LANDFILL, text: 'Landfill' },
+                        { value: EF_WASTE_RECYCLING, text: 'Recycling' },
+                        { value: EF_WASTE_INCINERATION, text: 'Incineration' }
+                    ]),
+                    createInput('s3_travel_spend', 'Weekly Business Travel Spend', 'number', 'INR'),
+                ]
+            },
+            healthcare: {
+                name: 'Healthcare',
+                inputs: [
+                    createSectionTitle('Scope 1: Direct Emissions'),
+                    createSelect('s1_heating_fuel_type', 'Facility Heating Fuel', [
+                        { value: 'natural_gas', text: 'Natural Gas' },
+                        { value: 'diesel', text: 'Diesel' },
+                        { value: 'lpg', text: 'LPG' }
+                    ]),
+                    createInput('s1_heating_fuel', 'Weekly Heating Fuel Consumption', 'number', 'SCM/liters/kg'),
+                    createInput('s1_num_vehicles', 'Number of Ambulances/Vehicles', 'number', 'units'),
+                    createInput('s1_vehicle_fuel_spend_per_vehicle', `Weekly Diesel Spend Per Vehicle (INR)`, 'number', 'INR'),
+                    createInput('s1_refrigerant_amount', 'Weekly Refrigerant Recharged (AC/Refrig.)', 'number', 'kg'), 
+                    createInput('s1_n2o_amount', 'Weekly Anesthetic N2O Consumption', 'number', 'kg'), 
+                    
+                    createSectionTitle('Scope 2: Purchased Energy'),
+                    createInput('s2_electricity', 'Weekly Electricity Consumption', 'number', 'kWh'),
+                    
+                    createSectionTitle('Scope 3: Value Chain'),
+                    createInput('s3_medical_supplies_spend', 'Weekly Medical Supplies Spend', 'number', 'INR'),
+                    createInput('s3_equipment_spend', 'Weekly Medical Equipment Spend', 'number', 'INR'), 
+                    createInput('s3_logistics_spend', 'Weekly Logistics Spend', 'number', 'INR'),
+                    createInput('s3_medical_waste', 'Weekly Medical Waste', 'number', 'tonnes'),
+                    createSelect('s3_waste_method', 'Waste Disposal Method', [
+                        { value: EF_WASTE_LANDFILL, text: 'Landfill' },
+                        { value: EF_WASTE_INCINERATION, text: 'Incineration' },
+                        { value: EF_WASTE_RECYCLING, text: 'Recycling' }
+                    ]),
+                    createInput('s3_travel_spend', 'Weekly Business Travel Spend', 'number', 'INR'),
+                ]
+            }
+        };
+
+        // ============================================
+        // HELPER FUNCTIONS (from user)
+        // ============================================
+
+        function getNum(id) {
+            const el = document.getElementById(id);
+            return parseFloat(el.value) || 0;
+        }
+        function getStr(id) {
+            const el = document.getElementById(id);
+            return el.value;
+        }
+        function toUSD(inr) {
+            return inr * INR_TO_USD_RATE;
+        }
+        
+        // This function collects ALL raw inputs from the visible form
+        function getRawInputs(sector) {
+            const rawInputs = {};
+            const form = document.getElementById(`form-${sector}`);
+            form.querySelectorAll('input, select').forEach(el => {
+                rawInputs[el.id] = el.value;
+            });
+            return rawInputs;
+        }
+
+        // ============================================
+        // DATA GATHERING FUNCTIONS (from user)
+        // ============================================
+        
+        function getManufacturingData() {
+            const fuelType = getStr('s1_fuel_type');
+            return {
+                scope1: {
+                    fuel_type: fuelType,
+                    fuel_consumption: getNum('s1_fuel_consumption'),
+                    fuel_factor: fuelType === 'natural_gas' ? EF_NATURAL_GAS : (fuelType === 'diesel' ? EF_DIESEL : EF_LPG),
+                    vehicle_fuel_spend: getNum('s1_vehicle_fuel_spend'),
+                    refrigerant_amount: getNum('s1_refrigerant_amount'),
+                    refrigerant_gwp: getNum('s1_refrigerant_type')
+                },
+                scope2: {
+                    electricity: getNum('s2_electricity'),
+                    electricity_factor: EF_ELECTRICITY_INDIA
+                },
+                scope3: {
+                    raw_materials_spend: getNum('s3_raw_materials_spend'),
+                    logistics_type: getStr('s3_logistics_type'),
+                    logistics_spend: getNum('s3_logistics_spend'),
+                    logistics_distance: getNum('s3_logistics_distance'),
+                    transport_mode_factor: getNum('s3_transport_mode'),
+                    waste_amount: getNum('s3_waste_amount'),
+                    waste_factor: getNum('s3_waste_method'),
+                    travel_spend: getNum('s3_travel_spend')
+                }
+            };
+        }
+        function getRetailData() {
+            return {
+                scope1: {
+                    vehicle_fuel_spend: getNum('s1_vehicle_fuel_spend'),
+                    refrigerant_amount: getNum('s1_refrigerant_amount'),
+                    refrigerant_gwp: getNum('s1_refrigerant_type')
+                },
+                scope2: {
+                    store_electricity: getNum('s2_store_electricity'),
+                    warehouse_electricity: getNum('s2_warehouse_electricity'),
+                    electricity_factor: EF_ELECTRICITY_INDIA
+                },
+                scope3: {
+                    retail_category: getStr('s3_retail_category'),
+                    procurement_spend: getNum('s3_procurement_spend'),
+                    meat_spend: getNum('s3_meat_spend'),
+                    dairy_spend: getNum('s3_dairy_spend'),
+                    veg_spend: getNum('s3_veg_spend'),
+                    packaging_spend: getNum('s3_packaging_spend'),
+                    logistics_spend: getNum('s3_logistics_spend'),
+                    waste_amount: getNum('s3_waste_amount'),
+                    waste_factor: getNum('s3_waste_method'),
+                    travel_spend: getNum('s3_travel_spend')
+                }
+            };
+        }
+        function getItData() {
+            return {
+                scope1: {
+                    generator_fuel_spend: getNum('s1_generator_fuel_spend'),
+                    refrigerant_amount: getNum('s1_refrigerant_amount'),
+                    refrigerant_gwp: GWP_R410A // Default
+                },
+                scope2: {
+                    office_electricity: getNum('s2_office_electricity'),
+                    datacenter_electricity: getNum('s2_datacenter_electricity'),
+                    electricity_factor: EF_ELECTRICITY_INDIA
+                },
+                scope3: {
+                    laptops_purchased: getNum('s3_laptops_purchased'),
+                    servers_purchased: getNum('s3_servers_purchased'),
+                    cloud_spend: getNum('s3_cloud_spend'),
+                    ewaste: getNum('s3_ewaste'),
+                    travel_spend: getNum('s3_travel_spend')
+                }
+            };
+        }
+        function getHospitalityData() {
+            const fuelType = getStr('s1_cooking_fuel_type');
+            return {
+                scope1: {
+                    cooking_fuel: getNum('s1_cooking_fuel'),
+                    fuel_factor: fuelType === 'lpg' ? EF_LPG : EF_NATURAL_GAS,
+                    vehicle_fuel_spend: getNum('s1_vehicle_fuel_spend'),
+                    refrigerant_amount: getNum('s1_refrigerant_amount'),
+                    refrigerant_gwp: GWP_R404A // Default
+                },
+                scope2: {
+                    electricity: getNum('s2_electricity'),
+                    electricity_factor: EF_ELECTRICITY_INDIA
+                },
+                scope3: {
+                    meat_spend: getNum('s3_meat_spend'),
+                    dairy_spend: getNum('s3_dairy_spend'),
+                    veg_spend: getNum('s3_veg_spend'),
+                    grains_spend: getNum('s3_grains_spend'),
+                    supplies_spend: getNum('s3_supplies_spend'),
+                    food_waste: getNum('s3_food_waste'),
+                    waste_factor: getNum('s3_waste_method'),
+                    travel_spend: getNum('s3_travel_spend')
+                }
+            };
+        }
+        function getHealthcareData() {
+            const fuelType = getStr('s1_heating_fuel_type');
+            return {
+                scope1: {
+                    heating_fuel: getNum('s1_heating_fuel'),
+                    fuel_factor: fuelType === 'natural_gas' ? EF_NATURAL_GAS : (fuelType === 'diesel' ? EF_DIESEL : EF_LPG),
+                    num_vehicles: getNum('s1_num_vehicles'),
+                    vehicle_fuel_spend_per_vehicle: getNum('s1_vehicle_fuel_spend_per_vehicle'),
+                    refrigerant_amount: getNum('s1_refrigerant_amount'),
+                    refrigerant_gwp: GWP_R410A, // Default
+                    n2o_amount: getNum('s1_n2o_amount')
+                },
+                scope2: {
+                    electricity: getNum('s2_electricity'),
+                    electricity_factor: EF_ELECTRICITY_INDIA
+                },
+                scope3: {
+                    medical_supplies_spend: getNum('s3_medical_supplies_spend'),
+                    equipment_spend: getNum('s3_equipment_spend'),
+                    logistics_spend: getNum('s3_logistics_spend'),
+                    medical_waste: getNum('s3_medical_waste'),
+                    waste_factor: getNum('s3_waste_method'),
+                    travel_spend: getNum('s3_travel_spend')
+                }
+            };
+        }
+
+        // ============================================
+        // CALCULATION FUNCTIONS (from user)
+        // ============================================
+
+        function calculateManufacturingEmissions(data) {
+            let emissions = { scope1: {}, scope2: {}, scope3: {}, totals: {} };
+            
+            emissions.scope1.stationary_fuel = data.scope1.fuel_consumption * data.scope1.fuel_factor;
+            const vehicle_liters = (data.scope1.vehicle_fuel_spend / PRICE_DIESEL_INR) || 0;
+            emissions.scope1.mobile_fuel = vehicle_liters * EF_DIESEL;
+            emissions.scope1.fugitive_refrigerants = data.scope1.refrigerant_amount * data.scope1.refrigerant_gwp;
+            emissions.totals.scope1 = Object.values(emissions.scope1).reduce((a, b) => a + b, 0);
+
+            emissions.scope2.electricity = data.scope2.electricity * data.scope2.electricity_factor;
+            emissions.totals.scope2 = emissions.scope2.electricity;
+
+            emissions.scope3.purchased_goods_raw_materials = (toUSD(data.scope3.raw_materials_spend) / 1000) * EF_SPEND_RAW_MATERIALS;
+            if (data.scope3.logistics_type === 'distance' && data.scope3.logistics_distance > 0) {
+                emissions.scope3.transportation_logistics = data.scope3.logistics_distance * data.scope3.transport_mode_factor;
+            } else {
+                emissions.scope3.transportation_logistics = (toUSD(data.scope3.logistics_spend) / 1000) * EF_SPEND_LOGISTICS;
+            }
+            emissions.scope3.waste = data.scope3.waste_amount * 1000 * data.scope3.waste_factor;
+            emissions.scope3.business_travel = toUSD(data.scope3.travel_spend) * EF_TRAVEL_SPEND;
+            emissions.totals.scope3 = Object.values(emissions.scope3).reduce((a, b) => a + b, 0);
+            
+            emissions.totals.total = emissions.totals.scope1 + emissions.totals.scope2 + emissions.totals.scope3;
+            return emissions;
+        }
+        function calculateRetailEmissions(data) {
+            let emissions = { scope1: {}, scope2: {}, scope3: {}, totals: {} };
+
+            const vehicle_liters = (data.scope1.vehicle_fuel_spend / PRICE_DIESEL_INR) || 0;
+            emissions.scope1.mobile_fuel = vehicle_liters * EF_DIESEL;
+            emissions.scope1.fugitive_refrigerants = data.scope1.refrigerant_amount * data.scope1.refrigerant_gwp;
+            emissions.totals.scope1 = Object.values(emissions.scope1).reduce((a, b) => a + b, 0);
+
+            const total_electricity = data.scope2.store_electricity + data.scope2.warehouse_electricity;
+            emissions.scope2.electricity_stores = data.scope2.store_electricity * data.scope2.electricity_factor;
+            emissions.scope2.electricity_warehouse = data.scope2.warehouse_electricity * data.scope2.electricity_factor;
+            emissions.totals.scope2 = emissions.scope2.electricity_stores + emissions.scope2.electricity_warehouse;
+
+            if (data.scope3.retail_category === 'food') {
+                emissions.scope3.purchased_goods_food = (
+                    (toUSD(data.scope3.meat_spend) / 1000) * 3.0 +
+                    (toUSD(data.scope3.dairy_spend) / 1000) * 1.5 +
+                    (toUSD(data.scope3.veg_spend) / 1000) * 0.5
+                );
+            } else {
+                let factor = EF_SPEND_TEXTILES; // Default
+                if(data.scope3.retail_category === 'electronics') factor = EF_SPEND_IT_EQUIPMENT;
+                if(data.scope3.retail_category === 'general') factor = EF_SPEND_RAW_MATERIALS;
+                emissions.scope3.purchased_goods_non_food = (toUSD(data.scope3.procurement_spend) / 1000) * factor;
+            }
+            emissions.scope3.packaging = (toUSD(data.scope3.packaging_spend) / 1000) * EF_SPEND_PACKAGING;
+            emissions.scope3.transportation_logistics = (toUSD(data.scope3.logistics_spend) / 1000) * EF_SPEND_LOGISTICS;
+            emissions.scope3.waste = data.scope3.waste_amount * 1000 * data.scope3.waste_factor;
+            emissions.scope3.business_travel = toUSD(data.scope3.travel_spend) * EF_TRAVEL_SPEND;
+            emissions.totals.scope3 = Object.values(emissions.scope3).reduce((a, b) => a + b, 0);
+            
+            emissions.totals.total = emissions.totals.scope1 + emissions.totals.scope2 + emissions.totals.scope3;
+            return emissions;
+        }
+        function calculateItEmissions(data) {
+            let emissions = { scope1: {}, scope2: {}, scope3: {}, totals: {} };
+
+            const generator_liters = (data.scope1.generator_fuel_spend / PRICE_DIESEL_INR) || 0;
+            emissions.scope1.stationary_fuel_generator = generator_liters * EF_DIESEL;
+            emissions.scope1.fugitive_refrigerants_ac = data.scope1.refrigerant_amount * data.scope1.refrigerant_gwp;
+            emissions.totals.scope1 = Object.values(emissions.scope1).reduce((a, b) => a + b, 0);
+
+            emissions.scope2.electricity_office = data.scope2.office_electricity * data.scope2.electricity_factor;
+            emissions.scope2.electricity_datacenter = data.scope2.datacenter_electricity * data.scope2.electricity_factor;
+            emissions.totals.scope2 = emissions.scope2.electricity_office + emissions.scope2.electricity_datacenter;
+
+            const laptop_factor = 300; // kg CO2e per laptop
+            const server_factor = 1000; // kg CO2e per server
+            emissions.scope3.purchased_goods_hardware = (data.scope3.laptops_purchased * laptop_factor) + (data.scope3.servers_purchased * server_factor);
+            const cloud_usd_weekly = toUSD(data.scope3.cloud_spend);
+            emissions.scope3.cloud_services = (cloud_usd_weekly / 1000) * EF_SPEND_CLOUD;
+            emissions.scope3.waste_ewaste = data.scope3.ewaste * EF_WASTE_RECYCLING; // Assuming e-waste is recycled
+            emissions.scope3.business_travel = toUSD(data.scope3.travel_spend) * EF_TRAVEL_SPEND;
+            emissions.totals.scope3 = Object.values(emissions.scope3).reduce((a, b) => a + b, 0);
+
+            emissions.totals.total = emissions.totals.scope1 + emissions.totals.scope2 + emissions.totals.scope3;
+            return emissions;
+        }
+        function calculateHospitalityEmissions(data) {
+            let emissions = { scope1: {}, scope2: {}, scope3: {}, totals: {} };
+
+            emissions.scope1.stationary_fuel_cooking = data.scope1.cooking_fuel * data.scope1.fuel_factor;
+            const vehicle_liters = (data.scope1.vehicle_fuel_spend / PRICE_DIESEL_INR) || 0;
+            emissions.scope1.mobile_fuel = vehicle_liters * EF_DIESEL;
+            emissions.scope1.fugitive_refrigerants = data.scope1.refrigerant_amount * data.scope1.refrigerant_gwp;
+            emissions.totals.scope1 = Object.values(emissions.scope1).reduce((a, b) => a + b, 0);
+
+            emissions.scope2.electricity = data.scope2.electricity * data.scope2.electricity_factor;
+            emissions.totals.scope2 = emissions.scope2.electricity;
+
+            emissions.scope3.purchased_food = (
+                (toUSD(data.scope3.meat_spend) / 1000) * 3.0 +
+                (toUSD(data.scope3.dairy_spend) / 1000) * 1.5 +
+                (toUSD(data.scope3.veg_spend) / 1000) * 0.5 +
+                (toUSD(data.scope3.grains_spend) / 1000) * 0.6
+            );
+            emissions.scope3.purchased_supplies = (toUSD(data.scope3.supplies_spend) / 1000) * EF_SPEND_SERVICES;
+            emissions.scope3.waste_food = data.scope3.food_waste * 1000 * data.scope3.waste_factor;
+            emissions.scope3.business_travel = toUSD(data.scope3.travel_spend) * EF_TRAVEL_SPEND;
+            emissions.totals.scope3 = Object.values(emissions.scope3).reduce((a, b) => a + b, 0);
+
+            emissions.totals.total = emissions.totals.scope1 + emissions.totals.scope2 + emissions.totals.scope3;
+            return emissions;
+        }
+        function calculateHealthcareEmissions(data) {
+            let emissions = { scope1: {}, scope2: {}, scope3: {}, totals: {} };
+            
+            emissions.scope1.stationary_fuel_heating = data.scope1.heating_fuel * data.scope1.fuel_factor;
+            const total_vehicle_spend = data.scope1.num_vehicles * data.scope1.vehicle_fuel_spend_per_vehicle;
+            const vehicle_liters = (total_vehicle_spend / PRICE_DIESEL_INR) || 0;
+            emissions.scope1.mobile_fuel_ambulances = vehicle_liters * EF_DIESEL;
+            emissions.scope1.fugitive_refrigerants = data.scope1.refrigerant_amount * data.scope1.refrigerant_gwp;
+            emissions.scope1.process_gases_n2o = data.scope1.n2o_amount * GWP_N2O;
+            emissions.totals.scope1 = Object.values(emissions.scope1).reduce((a, b) => a + b, 0);
+
+            emissions.scope2.electricity = data.scope2.electricity * data.scope2.electricity_factor;
+            emissions.totals.scope2 = emissions.scope2.electricity;
+
+            emissions.scope3.purchased_goods_medical_supplies = (toUSD(data.scope3.medical_supplies_spend) / 1000) * EF_SPEND_MEDICAL;
+            emissions.scope3.capital_goods_equipment = (toUSD(data.scope3.equipment_spend) / 1000) * EF_SPEND_IT_EQUIPMENT;
+            emissions.scope3.transportation_logistics = (toUSD(data.scope3.logistics_spend) / 1000) * EF_SPEND_LOGISTICS;
+            emissions.scope3.waste_medical = data.scope3.medical_waste * 1000 * data.scope3.waste_factor;
+            emissions.scope3.business_travel = toUSD(data.scope3.travel_spend) * EF_TRAVEL_SPEND;
+            emissions.totals.scope3 = Object.values(emissions.scope3).reduce((a, b) => a + b, 0);
+            
+            emissions.totals.total = emissions.totals.scope1 + emissions.totals.scope2 + emissions.totals.scope3;
+            return emissions;
+        }
+
+        // ============================================
+        // DISPLAY FUNCTION (for Add Data page)
+        // ============================================
+
+        function displayAddDataResults(emissions, sectorName) {
+            const totalEmissions = emissions.totals.total;
+            const totalTonnes = totalEmissions / 1000;
+            const s1Tonnes = emissions.totals.scope1 / 1000;
+            const s2Tonnes = emissions.totals.scope2 / 1000;
+            const s3Tonnes = emissions.totals.scope3 / 1000;
+
+            // Set Summary Cards
+            document.getElementById('resultsSector').innerText = `Sector: ${sectorName} | Region: India (Default)`;
+            document.getElementById('totalTonnes').innerText = `${totalTonnes.toFixed(1)} tCO2e`;
+            document.getElementById('totalKg').innerText = `${totalEmissions.toLocaleString(undefined, {maximumFractionDigits: 0})} kg CO2e`;
+            document.getElementById('scope1Tonnes').innerText = `${s1Tonnes.toFixed(1)} tCO2e`;
+            document.getElementById('scope2Tonnes').innerText = `${s2Tonnes.toFixed(1)} tCO2e`;
+            document.getElementById('scope3Tonnes').innerText = `${s3Tonnes.toFixed(1)} tCO2e`;
+
+            // Detailed Breakdown
+            const detailedResultsEl = document.getElementById('detailedResults');
+            detailedResultsEl.innerHTML = ''; // Clear previous
+            
+            const createRow = (label, value) => {
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center py-2 border-b border-slate-700';
+                // Clean up the label
+                let cleanLabel = label.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                el.innerHTML = `
+                    <span class="text-slate-400">${cleanLabel}</span>
+                    <span class="font-medium text-slate-100">${value.toLocaleString(undefined, {maximumFractionDigits: 0})} kg CO2e</span>
+                `;
+                return el;
+            };
+
+            detailedResultsEl.innerHTML += '<h5 class="font-semibold text-emerald-300 mt-3">Scope 1</h5>';
+            Object.keys(emissions.scope1).forEach(key => detailedResultsEl.appendChild(createRow(key, emissions.scope1[key])));
+            
+            detailedResultsEl.innerHTML += '<h5 class="font-semibold text-emerald-300 mt-3">Scope 2</h5>';
+            Object.keys(emissions.scope2).forEach(key => detailedResultsEl.appendChild(createRow(key, emissions.scope2[key])));
+
+            detailedResultsEl.innerHTML += '<h5 class="font-semibold text-emerald-300 mt-3">Scope 3</h5>';
+            Object.keys(emissions.scope3).forEach(key => detailedResultsEl.appendChild(createRow(key, emissions.scope3[key])));
+
+            // Combine all sources for top 5 chart
+            let allSources = [];
+            Object.keys(emissions.scope1).forEach(k => allSources.push({ label: `S1 - ${k}`, value: emissions.scope1[k] }));
+            Object.keys(emissions.scope2).forEach(k => allSources.push({ label: `S2 - ${k}`, value: emissions.scope2[k] }));
+            Object.keys(emissions.scope3).forEach(k => allSources.push({ label: `S3 - ${k}`, value: emissions.scope3[k] }));
+            allSources.sort((a, b) => b.value - a.value); // Sort descending
+            const top5Sources = allSources.filter(s => s.value > 0).slice(0, 5);
+            
+            const cleanLabel = (label) => label.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+            // Update Scope Chart
+            const scopeCtx = document.getElementById('scopeChart').getContext('2d');
+            if (addDataScopeChart) addDataScopeChart.destroy();
+            addDataScopeChart = new Chart(scopeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Scope 1', 'Scope 2', 'Scope 3'],
+                    datasets: [{
+                        data: [emissions.totals.scope1, emissions.totals.scope2, emissions.totals.scope3],
+                        backgroundColor: ['#10b981', '#38bdf8', '#f59e0b'], // Emerald, Sky Blue, Amber
+                        hoverOffset: 4,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cbd5e1' } }
+                    }
+                }
+            });
+
+            // Update Top Sources Chart
+            const topSourcesCtx = document.getElementById('topSourcesChart').getContext('2d');
+            if (addDataTopSourcesChart) addDataTopSourcesChart.destroy();
+            addDataTopSourcesChart = new Chart(topSourcesCtx, {
+                type: 'bar',
+                data: {
+                    labels: top5Sources.map(s => cleanLabel(s.label)),
+                    datasets: [{
+                        label: 'kg CO2e',
+                        data: top5Sources.map(s => s.value),
+                        backgroundColor: '#10b981' // Emerald
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#cbd5e1' } },
+                        y: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
+                    }
+                }
+            });
+
+
+            // Show results
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            document.getElementById('placeholder').classList.add('hidden');
+        }
+
+        // ============================================
+        // PAGE RENDER FUNCTIONS
+        // ============================================
+
+        // --- LOGIN PAGE ---
+        function setupLoginPage() {
+            // Populate register dropdown
+            const registerSelect = document.getElementById('register-sector');
+            registerSelect.innerHTML = '<option value="">-- Please choose a sector --</option>'; // Reset
+            Object.keys(forms).forEach(key => {
+                registerSelect.innerHTML += `<option value="${key}">${forms[key].name}</option>`;
+            });
+
+            // Login form submission
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value.trim();
+                const loginButton = document.getElementById('login-button');
+                const errorEl = document.getElementById('login-error');
+                if (!username) return;
+                
+                setButtonLoading(loginButton, true);
+                errorEl.classList.add('hidden');
+                
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username })
+                    });
+                    
+                    if (response.ok) {
+                        // User exists
+                        const data = await response.json();
+                        currentUser = data.user.username;
+                        userSector = data.user.sector;
+                        navigateTo('page-dashboard');
+                    } else if (response.status === 404) {
+                        // User not found, show register modal
+                        document.getElementById('register-username').innerText = username;
+                        showModal('register-modal');
+                    } else {
+                        // Other server error
+                        errorEl.innerText = 'Server error. Please try again.';
+                        errorEl.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    errorEl.innerText = 'Network error. Please try again.';
+                    errorEl.classList.remove('hidden');
+                } finally {
+                    setButtonLoading(loginButton, false);
+                }
+            });
+
+            // Register modal buttons
+            document.getElementById('register-cancel-btn').addEventListener('click', () => {
+                hideModal('register-modal');
+                document.getElementById('register-error').classList.add('hidden');
+            });
+            
+            document.getElementById('register-confirm-btn').addEventListener('click', async () => {
+                const username = document.getElementById('username').value.trim();
+                const sector = document.getElementById('register-sector').value;
+                const registerButton = document.getElementById('register-confirm-btn');
+                const errorEl = document.getElementById('register-error');
+                
+                if (!sector) {
+                    errorEl.innerText = 'Please select a sector.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                
+                setButtonLoading(registerButton, true);
+                errorEl.classList.add('hidden');
+                
+                try {
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, sector: sector })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Log them in
+                        currentUser = data.user.username;
+                        userSector = data.user.sector;
+                        
+                        // Hide modal and navigate
+                        hideModal('register-modal');
+                        navigateTo('page-dashboard');
+                    } else {
+                        errorEl.innerText = data.message || 'Registration failed.';
+                        errorEl.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Register error:', error);
+                    errorEl.innerText = 'Network error. Please try again.';
+                    errorEl.classList.remove('hidden');
+                } finally {
+                    setButtonLoading(registerButton, false);
+                }
+            });
+        }
+
+        // --- DASHBOARD PAGE ---
+        // This function now receives data from the backend
+        function renderDashboardPage(data) {
+            document.getElementById('dashboard-username').innerText = currentUser;
+            
+            const statsContainer = document.getElementById('dashboard-stats-container');
+            const historyContainer = document.getElementById('history-table-container');
+            const recommendationsContainer = document.getElementById('recommendations-container');
+            const scopeCtx = document.getElementById('dashboardScopeChart').getContext('2d');
+            
+            // Hide loading, show content
+            document.getElementById('dashboard-loading').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.remove('hidden');
+
+            if (!data.latest_entry) {
+                statsContainer.innerHTML = `<p class="text-slate-400 col-span-full">No data available. Click 'Add Weekly Data' to get started.</p>`;
+                historyContainer.innerHTML = `<p class="text-slate-400">No data entered yet.</p>`;
+                recommendationsContainer.innerHTML = `<p class="text-slate-400">Enter at least two weeks of data to see recommendations.</p>`;
+                if (dashboardScopeChart) dashboardScopeChart.destroy();
+                return;
+            }
+
+            // 1. Populate Overall Stats (from most recent entry)
+            const latestEntry = data.latest_entry;
+            const totals = latestEntry.calculations.totals;
+            const totalKg = totals.total;
+            const s1Kg = totals.scope1;
+            const s2Kg = totals.scope2;
+            const s3Kg = totals.scope3;
+
+            statsContainer.innerHTML = `
+                <div class="dark-card bg-emerald-900 border-l-4 border-emerald-500 p-4">
+                    <h3 class="text-sm font-medium text-emerald-300 uppercase tracking-wider">Total Emissions</h3>
+                    <p class="text-3xl font-extrabold text-emerald-100 mt-1">${(totalKg / 1000).toFixed(2)} tCO2e</p>
+                    <p class="text-sm text-emerald-300">${totalKg.toLocaleString(undefined, {maximumFractionDigits: 0})} kg</p>
+                </div>
+                <div class="dark-card bg-slate-700 p-4">
+                    <h3 class="text-sm font-medium text-slate-300 uppercase tracking-wider">Scope 1</h3>
+                    <p class="text-3xl font-extrabold text-slate-100 mt-1">${s1Kg.toLocaleString(undefined, {maximumFractionDigits: 0})} kg</p>
+                </div>
+                <div class="dark-card bg-slate-700 p-4">
+                    <h3 class="text-sm font-medium text-slate-300 uppercase tracking-wider">Scope 2</h3>
+                    <p class="text-3xl font-extrabold text-slate-100 mt-1">${s2Kg.toLocaleString(undefined, {maximumFractionDigits: 0})} kg</p>
+                </div>
+                <div class="dark-card bg-slate-700 p-4">
+                    <h3 class="text-sm font-medium text-slate-300 uppercase tracking-wider">Scope 3</h3>
+                    <p class="text-3xl font-extrabold text-slate-100 mt-1">${s3Kg.toLocaleString(undefined, {maximumFractionDigits: 0})} kg</p>
+                </div>
+            `;
+            
+            if (dashboardScopeChart) dashboardScopeChart.destroy();
+            dashboardScopeChart = new Chart(scopeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Scope 1', 'Scope 2', 'Scope 3'],
+                    datasets: [{
+                        data: [s1Kg, s2Kg, s3Kg],
+                        backgroundColor: ['#10b981', '#38bdf8', '#f59e0b'],
+                        hoverOffset: 4,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cbd5e1' } }
+                    }
+                }
+            });
+
+            // 2. Populate History Table (last 3 weeks, from backend)
+            historyContainer.innerHTML = '';
+            const history = data.history.reverse(); // Newest first
+            const allEntries = [...data.history]; // All entries for comparison
+            
+            history.forEach((entry, index) => {
+                const total = entry.calculations.totals.total;
+                let bgColor = 'bg-slate-700'; // Default
+                let changeHtml = '';
+                
+                // Find the *actual* previous week's total
+                let prevTotal = null;
+                if (data.previous_entry && index === 0) { // Comparing latest to previous
+                     prevTotal = data.previous_entry.calculations.totals.total;
+                } else if (index < history.length - 1) { // Comparing history item to one before it
+                     prevTotal = history[index + 1].calculations.totals.total;
+                }
+                
+                if (prevTotal !== null) {
+                    const delta = total - prevTotal;
+                    if (delta < 0) {
+                        bgColor = 'bg-green-800'; // Good
+                        changeHtml = `<span class="text-xs text-green-300">(${delta.toFixed(0)} kg)</span>`;
+                    } else if (delta > 0) {
+                        bgColor = 'bg-red-800'; // Bad
+                        changeHtml = `<span class="text-xs text-red-300">(+${delta.toFixed(0)} kg)</span>`;
+                    }
+                }
+
+                historyContainer.innerHTML += `
+                    <div class="${bgColor} p-4 rounded-lg shadow">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-slate-100">Week of ${entry.date}</span>
+                            <span class="font-bold text-lg text-white">${total.toLocaleString(undefined, {maximumFractionDigits: 0})} kg</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-slate-300">
+                            <span>S1: ${entry.calculations.totals.scope1.toFixed(0)} kg</span>
+                            <span>S2: ${entry.calculations.totals.scope2.toFixed(0)} kg</span>
+                            <span>S3: ${entry.calculations.totals.scope3.toFixed(0)} kg</span>
+                        </div>
+                        ${changeHtml ? `<div class="text-right mt-1">${changeHtml}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            // 3. Populate Recommendations (from backend)
+            if (!data.recommendations) {
+                recommendationsContainer.innerHTML = `<p class="text-slate-400">Enter one more week of data to see recommendations.</p>`;
+                return;
+            }
+            
+            const recs = data.recommendations;
+            const totalDelta = recs.totalDelta;
+            let recommendationsHtml = '';
+            
+            if (totalDelta < 0) {
+                recommendationsHtml += `
+                    <div class="p-4 rounded-lg bg-green-800 border border-green-600">
+                        <h3 class="text-lg font-semibold text-green-200">Great Job!</h3>
+                        <p class="text-green-300">Your total emissions <span class="font-bold">decreased by ${Math.abs(totalDelta).toFixed(0)} kg</span> from last week.</p>
+                    </div>
+                `;
+            } else if (totalDelta > 0) {
+                recommendationsHtml += `
+                    <div class="p-4 rounded-lg bg-red-800 border border-red-600">
+                        <h3 class="text-lg font-semibold text-red-200">Area for Improvement</h3>
+                        <p class="text-red-300">Your total emissions <span class="font-bold">increased by ${totalDelta.toFixed(0)} kg</span> from last week.</p>
+                    </div>
+                `;
+            } else {
+                recommendationsHtml += `<div class="p-4 rounded-lg bg-slate-700"><p class="text-slate-300">Your emissions remained the same as last week.</p></div>`;
+            }
+            
+            recommendationsHtml += '<h4 class="text-lg font-semibold text-emerald-300 mt-6">Top Changes:</h4><div class="space-y-3">';
+            
+            const topIncreases = recs.topIncreases;
+            const topDecreases = recs.topDecreases;
+
+            if (topIncreases.length === 0 && topDecreases.length === 0) {
+                 recommendationsHtml += `<p class="text-slate-400">No significant changes in individual emission sources this week.</p>`;
+            }
+
+            topIncreases.forEach(item => {
+                const label = item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                recommendationsHtml += `
+                    <div class="p-3 rounded bg-red-900 border border-red-700">
+                        <p class="font-semibold text-red-200"><span class="font-bold text-lg">&uarr;</span> ${label}</p>
+                        <p class="text-sm text-red-300">Increased by <span class="font-bold">${item.delta.toFixed(0)} kg CO2e</span>. (Last week: ${item.previous.toFixed(0)} kg, This week: ${item.current.toFixed(0)} kg)</p>
+                    </div>
+                `;
+            });
+
+            topDecreases.forEach(item => {
+                const label = item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                recommendationsHtml += `
+                    <div class="p-3 rounded bg-green-900 border border-green-700">
+                        <p class="font-semibold text-green-200"><span class="font-bold text-lg">&darr;</span> ${label}</p>
+                        <p class="text-sm text-green-300">Decreased by <span class="font-bold">${Math.abs(item.delta).toFixed(0)} kg CO2e</span>. (Last week: ${item.previous.toFixed(0)} kg, This week: ${item.current.toFixed(0)} kg)</p>
+                    </div>
+                `;
+            });
+
+            recommendationsHtml += '</div>';
+            recommendationsContainer.innerHTML = recommendationsHtml;
+        }
+
+        // --- ADD DATA PAGE ---
+        function renderAddDataPage() {
+            if (!currentUser) {
+                navigateTo('page-login');
+                return;
+            }
+            
+            // Reset form state
+            resetAddDataForm();
+            
+            // Set the default sector from the logged-in user
+            if (userSector) {
+                document.getElementById('sectorSelector').value = userSector;
+                showFormForSector(userSector);
+            }
+        }
+        
+        function resetAddDataForm() {
+            // Hide results, show placeholder
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('placeholder').classList.remove('hidden');
+
+            // Reset all forms
+            document.querySelectorAll('.form-section-inputs').forEach(form => {
+                form.reset();
+                form.classList.add('hidden');
+            });
+            
+            // Reset sector selector but keep default
+            document.getElementById('sectorSelector').value = userSector || "";
+            if (userSector) {
+                showFormForSector(userSector);
+            } else {
+                 document.getElementById('saveButton').classList.add('hidden');
+            }
+            
+            // Destroy charts
+            if (addDataScopeChart) addDataScopeChart.destroy();
+            if (addDataTopSourcesChart) addDataTopSourcesChart.destroy();
+        }
+
+        function showFormForSector(sector) {
+            document.querySelectorAll('.form-section-inputs').forEach(form => {
+                form.classList.add('hidden');
+            });
+            
+            if (sector) {
+                document.getElementById(`form-${sector}`).classList.remove('hidden');
+                document.getElementById('saveButton').classList.remove('hidden');
+            } else {
+                document.getElementById('saveButton').classList.add('hidden');
+            }
+            // Clear previous results
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('placeholder').classList.remove('hidden');
+        }
+        
+        function setupAddDataPage() {
+            // Populate form HTML
+            const sectorSelect = document.getElementById('sectorSelector');
+            sectorSelect.innerHTML = '<option value="">-- Please choose a sector --</option>'; // Reset
+            Object.keys(forms).forEach(key => {
+                // Populate selector
+                sectorSelect.innerHTML += `<option value="${key}">${forms[key].name}</option>`;
+                // Populate form HTML
+                const formEl = document.getElementById(`form-${key}`);
+                formEl.innerHTML = forms[key].inputs.join('');
+            });
+            
+            // Sector selector change
+            sectorSelect.addEventListener('change', (e) => {
+                showFormForSector(e.target.value);
+            });
+
+            // Save button click
+            document.getElementById('saveButton').addEventListener('click', async () => {
+                const sector = sectorSelect.value;
+                const saveButton = document.getElementById('saveButton');
+                if (!sector) return;
+                
+                setButtonLoading(saveButton, true);
+
+                let data = {};
+                let emissions = {};
+                let sectorName = sectorSelect.options[sectorSelect.selectedIndex].text;
+
+                switch (sector) {
+                    case 'manufacturing':
+                        data = getManufacturingData();
+                        emissions = calculateManufacturingEmissions(data);
+                        break;
+                    case 'retail':
+                        data = getRetailData();
+                        emissions = calculateRetailEmissions(data);
+                        break;
+                    case 'it':
+                        data = getItData();
+                        emissions = calculateItEmissions(data);
+                        break;
+                    case 'hospitality':
+                        data = getHospitalityData();
+                        emissions = calculateHospitalityEmissions(data);
+                        break;
+                    case 'healthcare':
+                        data = getHealthcareData();
+                        emissions = calculateHealthcareEmissions(data);
+                        break;
+                }
+                
+                // Display results on this page
+                displayAddDataResults(emissions, sectorName);
+                
+                // --- THIS IS THE NEW PART ---
+                // Save the data to our backend
+                const raw_inputs = getRawInputs(sector);
+                const newEntry = {
+                    date: new Date().toISOString().split('T')[0], // Get YYYY-MM-DD
+                    sector: sector,
+                    calculations: emissions,
+                    raw_inputs: raw_inputs
+                };
+                
+                try {
+                    const response = await fetch('/api/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: currentUser,
+                            entry: newEntry
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        // Show success modal
+                        showModal('success-modal');
+                    } else {
+                        const err = await response.json();
+                        alert(`Error saving data: ${err.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                    alert('Network error. Could not save data.');
+                } finally {
+                    setButtonLoading(saveButton, false);
+                }
+            });
+            
+            // Success modal OK button
+            document.getElementById('success-ok-btn').addEventListener('click', () => {
+                hideModal('success-modal');
+                // Don't navigate away, let user click "Back"
+            });
+
+            // Reset button click
+            document.getElementById('resetButton').addEventListener('click', () => {
+                const sector = sectorSelect.value;
+                if (sector) {
+                    document.getElementById(`form-${sector}`).reset();
+                }
+                // Hide results, show placeholder
+                document.getElementById('resultsContainer').classList.add('hidden');
+                document.getElementById('placeholder').classList.remove('hidden');
+            });
+            
+            // Back button
+            document.getElementById('add-back-btn').addEventListener('click', () => {
+                navigateTo('page-dashboard');
+            });
+        }
+        
+        function setupDashboardNav() {
+             // Dashboard navigation
+            document.getElementById('dashboard-add-btn').addEventListener('click', () => {
+                navigateTo('page-add');
+            });
+            
+            document.getElementById('dashboard-logout-btn').addEventListener('click', () => {
+                currentUser = null;
+                userSector = null;
+                navigateTo('page-login');
+            });
+        }
+
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // No data to load, backend handles it
+            
+            setupLoginPage();
+            setupAddDataPage();
+            setupDashboardNav();
+            
+            // Start at the login page
+            navigateTo('page-login');
+        });
+    </script>
+</body>
+</html>
+
