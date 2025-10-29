@@ -1,6 +1,7 @@
 import os
 import json
 import csv
+import requests
 from flask import Flask, request, jsonify, render_template
 
 # --- Configuration ---
@@ -9,6 +10,12 @@ DATA_FOLDER = 'data'
 USERS_FILE = 'users.txt'
 # CSV Header: date, sector, total_kg, scope1_kg, scope2_kg, scope3_kg, full_data_json
 CSV_HEADER = ['date', 'sector', 'total_kg', 'scope1_kg', 'scope2_kg', 'scope3_kg', 'full_data_json']
+
+# Gemini API Configuration
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent"
+# NOTE: The API key is assumed to be provided by the execution environment.
+GEMINI_API_KEY = "AIzaSyB2cS2Vfn-Fq7cQOYMo2pLJ-mn0IzAgDik" 
+MAX_RETRIES = 6
 
 # --- Helper Functions ---
 
@@ -47,7 +54,7 @@ def read_user_data(username):
                 # Re-hydrate the full entry from the JSON column
                 full_data = json.loads(row['full_data_json'])
                 entries.append(full_data)
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, KeyError):
                 print(f"Warning: Skipping malformed row in {csv_path}")
                 continue
     return entries
@@ -121,12 +128,58 @@ def calculate_recommendations(current_entry, previous_entry):
         "topIncreases": top_increases,
         "topDecreases": top_decreases
     }
+    
+def get_gemini_response_with_retry(payload):
+    """Handles API call with exponential backoff."""
+    for i in range(MAX_RETRIES):
+        try:
+            response = requests.post(
+                f"{GEMINI_API_URL}?key={GEMINI_API_KEY}", 
+                headers={'Content-Type': 'application/json'},
+                json=payload
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            candidate = result.get('candidates', [{}])[0]
+            
+            if candidate and candidate.get('content', {}).get('parts', [{}])[0].get('text'):
+                text = candidate['content']['parts'][0]['text']
+                sources = []
+                grounding_metadata = candidate.get('groundingMetadata')
+                if grounding_metadata and grounding_metadata.get('groundingAttributions'):
+                    sources = [
+                        {'uri': attr.get('web', {}).get('uri'), 'title': attr.get('web', {}).get('title')}
+                        for attr in grounding_metadata['groundingAttributions']
+                        if attr.get('web', {}).get('uri') and attr.get('web', {}).get('title')
+                    ]
+                return text, sources
+            
+            return "Sorry, I couldn't generate a coherent response.", []
+
+        except requests.exceptions.RequestException as e:
+            if i < MAX_RETRIES - 1 and response.status_code in [429, 500, 503]:
+                # Exponential backoff
+                wait_time = 2 ** i
+                print(f"Retrying in {wait_time}s due to error: {e}")
+                time.sleep(wait_time)
+            else:
+                print(f"Gemini API call failed after retries: {e}")
+                return "I'm currently unable to connect to the AI service. Please try again later.", []
+        except Exception as e:
+            print(f"An unexpected error occurred during API call: {e}")
+            return "An unexpected error occurred. Please try again later.", []
+
+    return "Failed to get a response after multiple retries.", []
+
 
 # --- API Routes ---
 
 @app.route('/')
 def serve_index():
     """Serves the main HTML file."""
+    # Ensure data folder exists on startup
+    os.makedirs(DATA_FOLDER, exist_ok=True)
     return render_template('index.html')
 
 @app.route('/api/login', methods=['POST'])
@@ -206,6 +259,9 @@ def api_get_dashboard_data():
             }
         })
 
+    # Sort data by date (assuming ISO format for robust sorting)
+    user_data.sort(key=lambda x: x.get('date', ''))
+
     latest_entry = user_data[-1]
     previous_entry = user_data[-2] if len(user_data) > 1 else None
     history = user_data[-3:] # Get last 3 entries
@@ -237,6 +293,63 @@ def api_add_data():
     else:
         return jsonify({"status": "error", "message": "Failed to save data"}), 500
 
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    """Handles the user's chat message and calls the Gemini API."""
+    data = request.json
+    user_message = data.get('message')
+    user_sector = data.get('sector')
+    user_data_history = data.get('history') # Full data history as context
+    
+    if not user_message:
+        return jsonify({"text": "Please provide a message.", "sources": []})
+
+    # 1. Construct System Instruction based on user context
+    data_summary = ""
+    if user_data_history:
+        # Get the latest entry for immediate context
+        latest_entry = user_data_history[-1]
+        totals = latest_entry.get('calculations', {}).get('totals', {})
+        total_co2 = totals.get('total', 0)
+        
+        # Get the top 3 emission sources from the latest data
+        all_sources = { **latest_entry['calculations'].get('scope1', {}), **latest_entry['calculations'].get('scope2', {}), **latest_entry['calculations'].get('scope3', {}) }
+        top_sources_list = sorted(all_sources.items(), key=lambda item: item[1], reverse=True)[:3]
+        top_sources = ", ".join([f"{k} ({v:.2f} kg)" for k, v in top_sources_list])
+
+        data_summary = f"""
+        The user operates in the {user_sector} sector.
+        Their most recent weekly CO2e footprint is {total_co2:.2f} kg.
+        Their top three emission sources are: {top_sources}.
+        All historical data is available in the 'user_data_history' field in the input.
+        """
+
+    system_instruction = f"""
+    You are the 'Carbon Analyst AI Advisor', an expert sustainability consultant specializing in reducing corporate carbon footprints. 
+    Your goal is to provide data-driven, actionable, and encouraging advice.
+    The user's sector is: {user_sector}. {data_summary}
+    Always keep your answers concise and directly related to sustainability, climate action, or business efficiency, using the provided context and real-time knowledge (via Google Search).
+    If the user asks about their personal data, use the data summary provided above.
+    """
+
+    # 2. Construct API Payload
+    payload = {
+        "contents": [{ "parts": [{ "text": user_message }] }],
+        "tools": [{ "google_search": {} }],
+        "systemInstruction": {
+            "parts": [{ "text": system_instruction }]
+        },
+    }
+    
+    # 3. Call Gemini API
+    gemini_text, gemini_sources = get_gemini_response_with_retry(payload)
+    
+    return jsonify({
+        "text": gemini_text,
+        "sources": gemini_sources
+    })
+
 # --- Run the App ---
 if __name__ == '__main__':
+    # Flask will automatically serve index.html from the root directory
     app.run(debug=True, port=5000)
