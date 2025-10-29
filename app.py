@@ -14,7 +14,7 @@ CSV_HEADER = ['date', 'sector', 'total_kg', 'scope1_kg', 'scope2_kg', 'scope3_kg
 # Gemini API Configuration
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent"
 # NOTE: The API key is assumed to be provided by the execution environment.
-GEMINI_API_KEY = "AIzaSyB2cS2Vfn-Fq7cQOYMo2pLJ-mn0IzAgDik" 
+GEMINI_API_KEY = "" 
 MAX_RETRIES = 6
 
 # --- Helper Functions ---
