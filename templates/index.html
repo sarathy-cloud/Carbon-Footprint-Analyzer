@@ -69,16 +69,17 @@
             transition: background-color 0.2s;
             border: none;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-flex; /* Added for spinner alignment */
+            align-items: center;  /* Added for spinner alignment */
+            justify-content: center; /* Added for spinner alignment */
         }
         .btn-primary:hover {
             background-color: #059669; /* emerald-700 */
         }
+         /* Added disabled state */
         .btn-primary:disabled {
             background-color: #047857; /* emerald-800 */
-            color: #a3f3d4;
+            color: #a3f7d0;
             cursor: not-allowed;
         }
         
@@ -117,27 +118,122 @@
             align-items: center;
             justify-content: center;
             z-index: 50;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-in-out;
+            backdrop-filter: blur(4px); /* Added blur */
         }
-        .modal-overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
+         /* Ensure modals scroll on small screens */
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
         }
-        
+
+        /* --- Login Page Enhancements --- */
+        #page-login .dark-card {
+             background: linear-gradient(145deg, #1e293b, #29374d); /* Subtle gradient */
+             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        #login-button {
+            transition: all 0.3s ease; /* Add transition to login button */
+        }
+         #login-button:hover {
+            transform: translateY(-2px); /* Slight lift on hover */
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3); /* Add shadow on hover */
+        }
+
+
+        /* --- ADDED: Chatbot styles --- */
+        #chat-float-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 40;
+            transition: transform 0.2s ease-out;
+        }
+        #chat-float-button:hover {
+            transform: scale(1.1);
+        }
+        #chatbot-modal {
+            z-index: 100; /* Ensure modal is on top */
+        }
+        #chat-messages {
+            height: 60vh; /* Adjust height as needed */
+            overflow-y: auto;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.5; /* Improved readability */
+            word-wrap: break-word; /* Wrap long words */
+        }
+        .chat-bubble-user {
+            background-color: #10b981; /* emerald-600 */
+            color: white;
+            border-bottom-right-radius: 0.25rem; /* Makes it look like a speech bubble */
+            align-self: flex-end; /* Align user messages to the right */
+        }
+        .chat-bubble-bot {
+            background-color: #334155; /* slate-700 */
+            color: #e2e8f0; /* slate-200 */
+            border-bottom-left-radius: 0.25rem; /* Makes it look like a speech bubble */
+            align-self: flex-start; /* Align bot messages to the left */
+        }
+        /* Styling for code blocks within bot messages */
+        .chat-bubble-bot pre {
+            background-color: #0f172a; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            overflow-x: auto; /* Allow horizontal scroll for long code */
+            font-size: 0.875rem; /* Smaller font for code */
+            white-space: pre-wrap; /* Wrap code */
+            word-wrap: break-word;
+        }
+        .chat-bubble-bot code {
+            font-family: 'Courier New', Courier, monospace; /* Monospace font for code */
+        }
+         /* Add some spacing for paragraphs and lists in bot messages */
+        .chat-bubble-bot p {
+            margin-bottom: 0.5rem;
+        }
+         .chat-bubble-bot ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+         .chat-bubble-bot ol {
+            list-style-type: decimal;
+            margin-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .chat-bubble-bot strong {
+            color: #34d399; /* emerald-400 */
+        }
         /* Loading spinner */
         .spinner {
             width: 20px;
             height: 20px;
-            border: 2px solid #a3f3d4; /* emerald-200 */
-            border-top-color: #ffffff;
+            border: 2px solid #34d399; /* emerald-400 */
+            border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 8px;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        /* --- End Chatbot styles --- */
+        
+        /* Report Modal Styles */
+        #report-content {
+             white-space: pre-wrap; /* Preserve formatting */
+             font-family: monospace;
+             background-color: #0f172a;
+             padding: 1rem;
+             border-radius: 0.5rem;
+             max-height: 60vh;
+             overflow-y: auto;
+             color: #e2e8f0;
+             font-size: 0.9rem;
         }
         
     </style>
@@ -163,10 +259,10 @@
                                     <label for="username" class="block text-sm font-medium text-emerald-300 mb-2">Company Name</label>
                                     <input type="text" id="username" class="dark-input" placeholder="Enter your company name" required>
                                 </div>
-                                <button type="submit" id="login-button" class="btn-primary w-full">
-                                    <span class="btn-text">Login</span>
+                                <button type="submit" id="login-button" class="btn-primary w-full"> <!-- Added ID for loading state -->
+                                    <span>Login</span> <!-- Wrapped text in span for easy replacement -->
                                 </button>
-                                <p id="login-error" class="text-red-400 text-sm text-center hidden"></p>
+                                <p id="login-error" class="text-red-400 text-sm text-center hidden"></p> <!-- Added error message display -->
                             </div>
                         </form>
                     </div>
@@ -174,8 +270,8 @@
             </div>
             
             <!-- Registration Modal (hidden by default) -->
-            <div id="register-modal" class="modal-overlay">
-                <div class="dark-card w-full max-w-md">
+            <div id="register-modal" class="modal-overlay hidden">
+                <div class="dark-card w-full max-w-md modal-content"> <!-- Added modal-content -->
                     <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Register New User</h2>
                     <p class="text-slate-300 mb-6">User '<span id="register-username" class="font-bold"></span>' not found. Please register by selecting your primary sector.</p>
                     <div class="space-y-4">
@@ -186,13 +282,13 @@
                                 <option value="">-- Please choose a sector --</option>
                             </select>
                         </div>
+                        <p id="register-error" class="text-red-400 text-sm text-center hidden"></p> <!-- Added error message display -->
                         <div class="flex gap-4">
                             <button id="register-cancel-btn" class="btn-secondary w-full">Cancel</button>
                             <button id="register-confirm-btn" class="btn-primary w-full">
-                                <span class="btn-text">Register & Login</span>
+                                <span>Register & Login</span> <!-- Wrapped text in span -->
                             </button>
                         </div>
-                        <p id="register-error" class="text-red-400 text-sm text-center hidden"></p>
                     </div>
                 </div>
             </div>
@@ -202,58 +298,77 @@
         <!-- PAGE: DASHBOARD                              -->
         <!-- ============================================ -->
         <div id="page-dashboard" class="page-section">
-            <!-- Header -->
-            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+             <!-- Header -->
+            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4"> <!-- Added flex-col for mobile -->
                 <div>
                     <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-500 to-green-500 bg-clip-text text-transparent">Dashboard</h1>
                     <p class="text-lg text-slate-400">Welcome, <span id="dashboard-username" class="font-semibold text-emerald-400"></span></p>
                 </div>
-                <div class="flex gap-4">
+                <div class="flex gap-4 flex-shrink-0"> <!-- Added flex-shrink-0 -->
                     <button id="dashboard-add-btn" class="btn-primary">Add Weekly Data</button>
                     <button id="dashboard-logout-btn" class="btn-secondary">Logout</button>
                 </div>
             </header>
 
             <!-- Main Content Grid -->
-            <div id="dashboard-content" class="hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Left Column: History -->
-                    <div class="lg:col-span-1 dark-card h-full">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 <!-- Left Column: History, Prediction, Report -->
+                <div class="lg:col-span-1 space-y-8 h-full">
+                     <!-- History -->
+                    <div class="dark-card">
                         <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Recent History</h2>
                         <div id="history-table-container" class="space-y-3">
                             <!-- JS will populate this -->
+                            <p class="text-slate-400">No data entered yet. Click "Add Weekly Data" to get started.</p>
                         </div>
                     </div>
                     
-                    <!-- Right Column: Main Stats & Recommendations -->
-                    <div class="lg:col-span-2 space-y-8">
-                        <!-- Overall Stats -->
-                        <div class="dark-card">
-                            <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Most Recent Week's Emissions</h2>
-                            <div id="dashboard-stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <!-- JS will populate this -->
-                            </div>
-                            <!-- Chart for scopes -->
-                            <div class="w-full max-w-sm mx-auto mt-6">
-                                <canvas id="dashboardScopeChart"></canvas>
-                            </div>
+                    <!-- Prediction Card -->
+                    <div class="dark-card">
+                        <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Next Week's Prediction</h2>
+                        <div id="prediction-container" class="space-y-4">
+                             <!-- Prediction content will be handled by JS -->
+                             <p class="text-slate-400">Enter at least two weeks of data to generate predictions.</p>
+                             <!-- Placeholder for button/results -->
                         </div>
-                        
-                        <!-- Recommendations -->
-                        <div class="dark-card">
-                            <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Data-Driven Recommendations</h2>
-                            <div id="recommendations-container" class="space-y-4">
-                                <!-- JS will populate this -->
-                            </div>
+                    </div>
+
+                    <!-- Monthly Report Card -->
+                     <div class="dark-card">
+                        <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Monthly Report</h2>
+                        <div id="report-container" class="space-y-4">
+                             <!-- Report content/button handled by JS -->
+                             <p class="text-slate-400">Enter at least four weeks of data to generate a monthly report.</p>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Loading State for Dashboard -->
-            <div id="dashboard-loading" class="text-center py-20">
-                <div class="spinner" style="margin: 0 auto; width: 40px; height: 40px; border-width: 4px;"></div>
-                <p class="text-lg text-slate-400 mt-4">Loading dashboard data...</p>
+                
+                <!-- Right Column: Main Stats & Recommendations -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Overall Stats -->
+                    <div class="dark-card">
+                        <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Most Recent Week's Emissions</h2>
+                        <div id="dashboard-stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- JS will populate this -->
+                            <p class="text-slate-400 col-span-full">No data available.</p>
+                        </div>
+                        <!-- Chart for scopes -->
+                        <div class="w-full max-w-sm mx-auto mt-6">
+                            <canvas id="dashboardScopeChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Recommendations -->
+                    <div class="dark-card">
+                        <h2 class="text-2xl font-semibold text-emerald-400 mb-6">Data-Driven Recommendations</h2>
+                        <div id="recommendations-container" class="space-y-4">
+                            <!-- JS will populate this -->
+                            <p class="text-slate-400">Enter at least two weeks of data to see recommendations.</p>
+                        </div>
+                         <!-- ADDED: Placeholder for weekly reward -->
+                         <div id="weekly-reward-container" class="mt-6 hidden"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -262,7 +377,7 @@
         <!-- ============================================ -->
         <div id="page-add" class="page-section">
             <!-- Header -->
-            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+            <header class="flex justify-between items-center mb-8">
                 <div>
                     <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-500 to-green-500 bg-clip-text text-transparent">Add Weekly Data</h1>
                     <p class="text-lg text-slate-400">Fill in your data for the week.</p>
@@ -317,7 +432,7 @@
 
                     <!-- Calculate Button -->
                     <button id="saveButton" class="hidden btn-primary w-full mt-6">
-                        <span class="btn-text">Calculate & Save Week's Data</span>
+                         <span>Calculate & Save Week's Data</span> <!-- Wrapped text -->
                     </button>
                 </div>
 
@@ -398,8 +513,8 @@
             </div>
             
             <!-- Success Modal (hidden by default) -->
-            <div id="success-modal" class="modal-overlay">
-                <div class="dark-card w-full max-w-md text-center">
+            <div id="success-modal" class="modal-overlay hidden">
+                <div class="dark-card w-full max-w-md text-center modal-content"> <!-- Added modal-content -->
                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-200">
                         <svg class="h-6 w-6 text-green-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -415,42 +530,126 @@
 
     </div>
 
+     <!-- --- ADDED: CHATBOT UI (Floating Button & Modal) --- -->
+    <button id="chat-float-button" class="btn-primary p-4 rounded-full shadow-lg hidden"> <!-- Start hidden -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+            <path d="M15 7v2a2 2 0 01-2 2H9.88l-3.29 3.29A1 1 0 008 16V9l.88-1.76A2 2 0 0111.88 6H13a2 2 0 012 2z" />
+        </svg>
+    </button>
+
+    <div id="chatbot-modal" class="modal-overlay hidden">
+        <div class="dark-card w-full max-w-2xl transform transition-all modal-content"> <!-- Adjusted width, Added modal-content -->
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-semibold text-emerald-400">Carbon Analyzer</h2> <!-- Renamed -->
+                <button id="chat-close-btn" class="text-slate-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="dark-card bg-slate-900 p-4 rounded-lg mb-4 flex flex-col space-y-2">
+                <!-- Messages will be injected here -->
+                 <div class="chat-bubble chat-bubble-bot">
+                     <p>Hello! I'm your AI Carbon Analyzer. I can analyze your saved data. Ask me things like:</p>
+                    <ul class="text-sm list-disc list-inside">
+                        <li>"What's my biggest emission source?"</li>
+                        <li>"How did my Scope 2 emissions change last week?"</li>
+                        <li>"Give me a summary of my emissions history."</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <form id="chat-form">
+                <div class="flex gap-4">
+                    <input type="text" id="chat-input" class="dark-input" placeholder="Ask about your data..." required>
+                    <button type="submit" id="chat-send-btn" class="btn-primary p-3">
+                         <!-- Send Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                           <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.428A1 1 0 008 16.5V3a1 1 0 00-.894-.447z" />
+                           <path d="M17.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.428A1 1 0 0016 16.5V3a1 1 0 00-.894-.447z" />
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+     <!-- --- End Chatbot UI --- -->
+
+     <!-- --- ADDED: Monthly Report Modal --- -->
+     <div id="report-modal" class="modal-overlay hidden">
+         <div class="dark-card w-full max-w-3xl transform transition-all modal-content"> <!-- Wider modal -->
+             <!-- Modal Header -->
+             <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-semibold text-emerald-400">Monthly Emissions Report</h2>
+                 <button id="report-close-btn" class="text-slate-400 hover:text-white">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                     </svg>
+                 </button>
+             </div>
+             <!-- Report Content -->
+             <div id="report-content-container" class="mb-4">
+                 <div id="report-loading" class="hidden text-center text-slate-400">
+                     <div class="spinner mx-auto my-4"></div> Generating report...
+                 </div>
+                 <pre id="report-content"></pre> <!-- Use <pre> for formatted text -->
+                 <p id="report-error" class="text-red-400 hidden"></p>
+             </div>
+             <!-- Action Buttons -->
+             <div class="flex gap-4 justify-end">
+                 <button id="report-copy-btn" class="btn-secondary">Copy Report Text</button>
+                 <button id="report-regenerate-btn" class="btn-primary hidden">Regenerate</button> <!-- Initially hidden -->
+             </div>
+              <p id="copy-status" class="text-sm text-green-400 text-right mt-2 hidden">Report copied!</p>
+         </div>
+     </div>
+      <!-- --- End Report Modal --- -->
+
+
     <script>
         // ============================================
-        // APP STATE & API
+        // APP STATE & DATABASE SIMULATION
         // ============================================
-        let currentUser = null;
-        let userSector = null; // Store the user's default sector
+        let currentUser = null; // MODIFIED: Will store { username, sector } object after login/register
+        let usersDB = {}; // Simulates users.txt -> {"username": "sector"}
+        let userData = []; // Holds array of weekly entries for the currentUser, loaded from localStorage
         
         // Chart instances
         let addDataScopeChart = null;
         let addDataTopSourcesChart = null;
         let dashboardScopeChart = null;
-        
+
         // ============================================
-        // UTILITY FUNCTIONS
+        // DATABASE (localStorage) FUNCTIONS
         // ============================================
-        
-        function showModal(modalId) {
-            document.getElementById(modalId).classList.add('visible');
+        function loadUsersDB() {
+            usersDB = JSON.parse(localStorage.getItem('carbon_users')) || {};
         }
-        
-        function hideModal(modalId) {
-            document.getElementById(modalId).classList.remove('visible');
+
+        function saveUsersDB() {
+            localStorage.setItem('carbon_users', JSON.stringify(usersDB));
         }
-        
-        // Helper to show/hide loading spinners on buttons
-        function setButtonLoading(button, isLoading) {
-            const textEl = button.querySelector('.btn-text');
-            if (isLoading) {
-                button.disabled = true;
-                textEl.insertAdjacentHTML('beforebegin', '<div class="spinner"></div>');
+
+        function loadUserData() {
+            if (currentUser) {
+                // Ensure currentUser is just the username string for key compatibility
+                const usernameKey = typeof currentUser === 'object' ? currentUser.username : currentUser;
+                userData = JSON.parse(localStorage.getItem(`carbon_data_${usernameKey}`)) || [];
             } else {
-                button.disabled = false;
-                const spinner = button.querySelector('.spinner');
-                if (spinner) {
-                    spinner.remove();
-                }
+                userData = [];
+            }
+        }
+
+        function saveUserData() {
+             if (currentUser) {
+                // Ensure currentUser is just the username string for key compatibility
+                 const usernameKey = typeof currentUser === 'object' ? currentUser.username : currentUser;
+                localStorage.setItem(`carbon_data_${usernameKey}`, JSON.stringify(userData));
             }
         }
 
@@ -465,52 +664,32 @@
             if (targetPage) {
                 targetPage.style.display = 'block';
             }
+
+             // --- ADDED: Show/hide chat float button ---
+             const chatButton = document.getElementById('chat-float-button');
+             if (pageId === 'page-login') {
+                 chatButton.classList.add('hidden');
+             } else {
+                 // Only show if logged in
+                 if (currentUser) {
+                    chatButton.classList.remove('hidden');
+                 } else {
+                     chatButton.classList.add('hidden');
+                 }
+             }
+             // --- End Chat button logic ---
             
             // Re-render pages that need dynamic content
             if (pageId === 'page-dashboard') {
-                // Don't render yet, fetch data first
-                if (!currentUser) {
-                    navigateTo('page-login'); // Security check
-                    return;
-                }
-                document.getElementById('dashboard-content').classList.add('hidden');
-                document.getElementById('dashboard-loading').classList.remove('hidden');
-                fetchDashboardData();
+                 // We load data during login/registration now, just render
+                renderDashboardPage();
             } else if (pageId === 'page-add') {
                 renderAddDataPage();
-            } else if (pageId === 'page-login') {
-                document.getElementById('username').value = '';
-                document.getElementById('login-error').classList.add('hidden');
             }
         }
-        
-        async function fetchDashboardData() {
-            try {
-                const response = await fetch('/api/dashboard', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: currentUser })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to load dashboard data.');
-                }
-                
-                const data = await response.json();
-                if (data.status === 'success') {
-                    // Data is fetched, now render the page
-                    renderDashboardPage(data.dashboard_data);
-                }
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
-                // Handle error (e.g., show error message on dashboard page)
-                document.getElementById('dashboard-loading').innerText = 'Error loading data. Please try again.';
-            }
-        }
-
 
         // ============================================
-        // CONSTANTS & EMISSION FACTORS (from user)
+        // CONSTANTS & EMISSION FACTORS (Unchanged)
         // ============================================
         Chart.defaults.color = '#cbd5e1'; // slate-300
         Chart.defaults.borderColor = '#334155'; // slate-700
@@ -547,7 +726,7 @@
         const EF_WASTE_RECYCLING = 0.05;
 
         // ============================================
-        // FORM TEMPLATES (from user, modified for theme)
+        // FORM TEMPLATES (Unchanged)
         // ============================================
 
         // Helper to create an input field
@@ -556,7 +735,7 @@
                 <div>
                     <label for="${id}" class="block text-sm font-medium text-emerald-300">${label}</label>
                     <div class="mt-1 relative">
-                        <input type="${type}" id="${id}" name="${id}" class="dark-input pr-16" placeholder="${placeholder}">
+                        <input type="${type}" id="${id}" name="${id}" class="dark-input pr-16" placeholder="${placeholder}" min="0" step="any"> <!-- Added min=0 and step=any -->
                         ${unit ? `<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-slate-400 sm:text-sm">${unit}</span></div>` : ''}
                     </div>
                 </div>
@@ -749,12 +928,14 @@
         };
 
         // ============================================
-        // HELPER FUNCTIONS (from user)
+        // HELPER FUNCTIONS (Unchanged)
         // ============================================
 
         function getNum(id) {
             const el = document.getElementById(id);
-            return parseFloat(el.value) || 0;
+             // Ensure inputs are non-negative
+            const value = parseFloat(el.value);
+            return isNaN(value) || value < 0 ? 0 : value;
         }
         function getStr(id) {
             const el = document.getElementById(id);
@@ -775,7 +956,7 @@
         }
 
         // ============================================
-        // DATA GATHERING FUNCTIONS (from user)
+        // DATA GATHERING FUNCTIONS (Unchanged)
         // ============================================
         
         function getManufacturingData() {
@@ -906,7 +1087,7 @@
         }
 
         // ============================================
-        // CALCULATION FUNCTIONS (from user)
+        // CALCULATION FUNCTIONS (Unchanged)
         // ============================================
 
         function calculateManufacturingEmissions(data) {
@@ -1044,7 +1225,7 @@
         }
 
         // ============================================
-        // DISPLAY FUNCTION (for Add Data page)
+        // DISPLAY FUNCTION (Unchanged)
         // ============================================
 
         function displayAddDataResults(emissions, sectorName) {
@@ -1152,7 +1333,7 @@
         }
 
         // ============================================
-        // PAGE RENDER FUNCTIONS
+        // PAGE RENDER FUNCTIONS (MODIFIED FOR NEW FEATURES)
         // ============================================
 
         // --- LOGIN PAGE ---
@@ -1164,124 +1345,122 @@
                 registerSelect.innerHTML += `<option value="${key}">${forms[key].name}</option>`;
             });
 
-            // Login form submission
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
+             // Login form submission (using localStorage)
+            document.getElementById('login-form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const username = document.getElementById('username').value.trim();
-                const loginButton = document.getElementById('login-button');
-                const errorEl = document.getElementById('login-error');
+                const loginButton = document.getElementById('login-button'); // Get button
+                const errorEl = document.getElementById('login-error'); // Get error element
+                
                 if (!username) return;
-                
-                setButtonLoading(loginButton, true);
-                errorEl.classList.add('hidden');
-                
-                try {
-                    const response = await fetch('/api/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: username })
-                    });
-                    
-                    if (response.ok) {
+                errorEl.classList.add('hidden'); // Hide error initially
+
+                // Simulate loading state (optional, but good UX)
+                loginButton.disabled = true;
+                loginButton.innerHTML = '<div class="spinner"></div>';
+
+                // Simulate network delay (remove in real app)
+                setTimeout(() => {
+                    if (usersDB[username]) {
                         // User exists
-                        const data = await response.json();
-                        currentUser = data.user.username;
-                        userSector = data.user.sector;
+                        currentUser = { username: username, sector: usersDB[username] }; // Store object
+                        loadUserData(); // Load data from localStorage
                         navigateTo('page-dashboard');
-                    } else if (response.status === 404) {
+                    } else {
                         // User not found, show register modal
                         document.getElementById('register-username').innerText = username;
-                        showModal('register-modal');
-                    } else {
-                        // Other server error
-                        errorEl.innerText = 'Server error. Please try again.';
-                        errorEl.classList.remove('hidden');
+                        document.getElementById('register-modal').classList.remove('hidden');
                     }
-                } catch (error) {
-                    console.error('Login error:', error);
-                    errorEl.innerText = 'Network error. Please try again.';
-                    errorEl.classList.remove('hidden');
-                } finally {
-                    setButtonLoading(loginButton, false);
-                }
+                    // Reset button
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = '<span>Login</span>';
+                }, 500); // 0.5 second delay
             });
 
-            // Register modal buttons
+            // Register modal buttons (using localStorage)
             document.getElementById('register-cancel-btn').addEventListener('click', () => {
-                hideModal('register-modal');
-                document.getElementById('register-error').classList.add('hidden');
+                document.getElementById('register-modal').classList.add('hidden');
+                 document.getElementById('register-error').classList.add('hidden'); // Hide error on cancel
             });
             
-            document.getElementById('register-confirm-btn').addEventListener('click', async () => {
+            document.getElementById('register-confirm-btn').addEventListener('click', () => {
                 const username = document.getElementById('username').value.trim();
                 const sector = document.getElementById('register-sector').value;
-                const registerButton = document.getElementById('register-confirm-btn');
-                const errorEl = document.getElementById('register-error');
-                
+                const registerButton = document.getElementById('register-confirm-btn'); // Get button
+                const errorEl = document.getElementById('register-error'); // Get error element
+
                 if (!sector) {
                     errorEl.innerText = 'Please select a sector.';
                     errorEl.classList.remove('hidden');
                     return;
                 }
-                
-                setButtonLoading(registerButton, true);
-                errorEl.classList.add('hidden');
-                
-                try {
-                    const response = await fetch('/api/register', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: username, sector: sector })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        // Log them in
-                        currentUser = data.user.username;
-                        userSector = data.user.sector;
-                        
-                        // Hide modal and navigate
-                        hideModal('register-modal');
-                        navigateTo('page-dashboard');
-                    } else {
-                        errorEl.innerText = data.message || 'Registration failed.';
-                        errorEl.classList.remove('hidden');
-                    }
-                } catch (error) {
-                    console.error('Register error:', error);
-                    errorEl.innerText = 'Network error. Please try again.';
-                    errorEl.classList.remove('hidden');
-                } finally {
-                    setButtonLoading(registerButton, false);
-                }
+                 errorEl.classList.add('hidden'); // Hide error
+
+                // Simulate loading
+                 registerButton.disabled = true;
+                 registerButton.innerHTML = '<div class="spinner"></div>';
+
+                 // Simulate delay (remove in real app)
+                 setTimeout(() => {
+                     // Add new user to localStorage DB
+                     usersDB[username] = sector;
+                     saveUsersDB();
+                     
+                     // Log them in
+                     currentUser = { username: username, sector: sector }; // Store object
+                     userData = []; // New user has no data
+                     saveUserData(); // Save empty data array for the new user
+                     
+                     // Hide modal and navigate
+                     document.getElementById('register-modal').classList.add('hidden');
+                     navigateTo('page-dashboard');
+
+                     // Reset button
+                     registerButton.disabled = false;
+                     registerButton.innerHTML = '<span>Register & Login</span>';
+                 }, 500);
             });
         }
 
-        // --- DASHBOARD PAGE ---
-        // This function now receives data from the backend
-        function renderDashboardPage(data) {
-            document.getElementById('dashboard-username').innerText = currentUser;
+        // --- DASHBOARD PAGE --- (MODIFIED)
+        // Renders based on global 'userData' loaded from localStorage
+        async function renderDashboardPage() { // Marked async for potential reward generation
+            if (!currentUser) {
+                navigateTo('page-login');
+                return;
+            }
             
+            // Ensure currentUser is the object {username, sector}
+            const username = typeof currentUser === 'object' ? currentUser.username : currentUser;
+            document.getElementById('dashboard-username').innerText = username;
+            
+            loadUserData(); // Ensure latest data is loaded from localStorage
+
             const statsContainer = document.getElementById('dashboard-stats-container');
             const historyContainer = document.getElementById('history-table-container');
             const recommendationsContainer = document.getElementById('recommendations-container');
             const scopeCtx = document.getElementById('dashboardScopeChart').getContext('2d');
-            
-            // Hide loading, show content
-            document.getElementById('dashboard-loading').classList.add('hidden');
-            document.getElementById('dashboard-content').classList.remove('hidden');
+            const predictionContainer = document.getElementById('prediction-container'); // Prediction section
+            const reportContainer = document.getElementById('report-container'); // Report section
+            const rewardContainer = document.getElementById('weekly-reward-container'); // Reward section
 
-            if (!data.latest_entry) {
+            // Clear previous reward
+            rewardContainer.innerHTML = '';
+            rewardContainer.classList.add('hidden');
+
+            if (userData.length === 0) {
                 statsContainer.innerHTML = `<p class="text-slate-400 col-span-full">No data available. Click 'Add Weekly Data' to get started.</p>`;
                 historyContainer.innerHTML = `<p class="text-slate-400">No data entered yet.</p>`;
                 recommendationsContainer.innerHTML = `<p class="text-slate-400">Enter at least two weeks of data to see recommendations.</p>`;
+                predictionContainer.innerHTML = `<p class="text-slate-400">Enter at least two weeks of data to generate predictions.</p>`; // Update prediction text
+                reportContainer.innerHTML = `<p class="text-slate-400">Enter at least four weeks of data to generate a monthly report.</p>`; // Update report text
                 if (dashboardScopeChart) dashboardScopeChart.destroy();
                 return;
             }
 
             // 1. Populate Overall Stats (from most recent entry)
-            const latestEntry = data.latest_entry;
+            // ... (Stats population code remains unchanged) ...
+             const latestEntry = userData[userData.length - 1];
             const totals = latestEntry.calculations.totals;
             const totalKg = totals.total;
             const s1Kg = totals.scope1;
@@ -1328,26 +1507,24 @@
                 }
             });
 
-            // 2. Populate History Table (last 3 weeks, from backend)
+            // 2. Populate History Table (last 3 weeks)
+            // ... (History population code remains unchanged) ...
             historyContainer.innerHTML = '';
-            const history = data.history.reverse(); // Newest first
-            const allEntries = [...data.history]; // All entries for comparison
+            const history = userData.slice(-3).reverse(); // Get last 3, newest first
             
             history.forEach((entry, index) => {
                 const total = entry.calculations.totals.total;
                 let bgColor = 'bg-slate-700'; // Default
                 let changeHtml = '';
                 
-                // Find the *actual* previous week's total
-                let prevTotal = null;
-                if (data.previous_entry && index === 0) { // Comparing latest to previous
-                     prevTotal = data.previous_entry.calculations.totals.total;
-                } else if (index < history.length - 1) { // Comparing history item to one before it
-                     prevTotal = history[index + 1].calculations.totals.total;
-                }
-                
-                if (prevTotal !== null) {
+                // Compare to previous week in the global userData array
+                const overallIndex = userData.length - 1 - index; // Index in the main array
+                const prevWeekIndex = overallIndex - 1;
+
+                if (prevWeekIndex >= 0) {
+                    const prevTotal = userData[prevWeekIndex].calculations.totals.total;
                     const delta = total - prevTotal;
+                    
                     if (delta < 0) {
                         bgColor = 'bg-green-800'; // Good
                         changeHtml = `<span class="text-xs text-green-300">(${delta.toFixed(0)} kg)</span>`;
@@ -1373,68 +1550,122 @@
                 `;
             });
             
-            // 3. Populate Recommendations (from backend)
-            if (!data.recommendations) {
+            // 3. Populate Recommendations, Prediction, Report Buttons
+            if (userData.length < 2) {
                 recommendationsContainer.innerHTML = `<p class="text-slate-400">Enter one more week of data to see recommendations.</p>`;
-                return;
-            }
-            
-            const recs = data.recommendations;
-            const totalDelta = recs.totalDelta;
-            let recommendationsHtml = '';
-            
-            if (totalDelta < 0) {
-                recommendationsHtml += `
-                    <div class="p-4 rounded-lg bg-green-800 border border-green-600">
-                        <h3 class="text-lg font-semibold text-green-200">Great Job!</h3>
-                        <p class="text-green-300">Your total emissions <span class="font-bold">decreased by ${Math.abs(totalDelta).toFixed(0)} kg</span> from last week.</p>
-                    </div>
-                `;
-            } else if (totalDelta > 0) {
-                recommendationsHtml += `
-                    <div class="p-4 rounded-lg bg-red-800 border border-red-600">
-                        <h3 class="text-lg font-semibold text-red-200">Area for Improvement</h3>
-                        <p class="text-red-300">Your total emissions <span class="font-bold">increased by ${totalDelta.toFixed(0)} kg</span> from last week.</p>
-                    </div>
-                `;
+                predictionContainer.innerHTML = `<p class="text-slate-400">Enter one more week of data to generate predictions.</p>`; 
             } else {
-                recommendationsHtml += `<div class="p-4 rounded-lg bg-slate-700"><p class="text-slate-300">Your emissions remained the same as last week.</p></div>`;
+                 // --- Recommendations Logic ---
+                 const current = userData[userData.length - 1];
+                 const previous = userData[userData.length - 2];
+                 const totalDelta = current.calculations.totals.total - previous.calculations.totals.total;
+                 
+                 let recommendationsHtml = '';
+                 
+                 if (totalDelta < 0) {
+                     recommendationsHtml += `
+                         <div class="p-4 rounded-lg bg-green-800 border border-green-600">
+                             <h3 class="text-lg font-semibold text-green-200">Great Job!</h3>
+                             <p class="text-green-300">Your total emissions <span class="font-bold">decreased by ${Math.abs(totalDelta).toFixed(0)} kg</span> from last week.</p>
+                         </div>
+                     `;
+                      // --- CALL REWARD GENERATION ---
+                     handleGenerateReward(Math.abs(totalDelta)); // Call async function
+                 } else if (totalDelta > 0) {
+                     recommendationsHtml += `
+                         <div class="p-4 rounded-lg bg-red-800 border border-red-600">
+                             <h3 class="text-lg font-semibold text-red-200">Area for Improvement</h3>
+                             <p class="text-red-300">Your total emissions <span class="font-bold">increased by ${totalDelta.toFixed(0)} kg</span> from last week.</p>
+                         </div>
+                     `;
+                 } else {
+                     recommendationsHtml += `<div class="p-4 rounded-lg bg-slate-700"><p class="text-slate-300">Your emissions remained the same as last week.</p></div>`;
+                 }
+                 
+                 // Analyze deltas (unchanged)
+                 // ... (delta analysis code remains unchanged) ...
+                  const deltas = [];
+                 const allCurrentSources = { ...current.calculations.scope1, ...current.calculations.scope2, ...current.calculations.scope3 };
+                 const allPreviousSources = { ...previous.calculations.scope1, ...previous.calculations.scope2, ...previous.calculations.scope3 };
+                 const allKeys = new Set([...Object.keys(allCurrentSources), ...Object.keys(allPreviousSources)]);
+                 
+                 allKeys.forEach(key => {
+                     const currentVal = allCurrentSources[key] || 0;
+                     const previousVal = allPreviousSources[key] || 0;
+                     const delta = currentVal - previousVal;
+                     
+                     if (Math.abs(delta) > 0.1) {
+                         deltas.push({ key: key, delta: delta, current: currentVal, previous: previousVal });
+                     }
+                 });
+                 deltas.sort((a, b) => b.delta - a.delta);
+                 
+                 recommendationsHtml += '<h4 class="text-lg font-semibold text-emerald-300 mt-6">Top Changes:</h4><div class="space-y-3">';
+                 const topIncreases = deltas.filter(d => d.delta > 0).slice(0, 3);
+                 const topDecreases = deltas.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 3);
+
+                 if (topIncreases.length === 0 && topDecreases.length === 0) {
+                      recommendationsHtml += `<p class="text-slate-400">No significant changes in individual emission sources this week.</p>`;
+                 }
+
+                 topIncreases.forEach(item => {
+                     const label = item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                     recommendationsHtml += `
+                         <div class="p-3 rounded bg-red-900 border border-red-700">
+                             <p class="font-semibold text-red-200"><span class="font-bold text-lg">&uarr;</span> ${label}</p>
+                             <p class="text-sm text-red-300">Increased by <span class="font-bold">${item.delta.toFixed(0)} kg CO2e</span>. (Last: ${item.previous.toFixed(0)} kg, This: ${item.current.toFixed(0)} kg)</p>
+                         </div>
+                     `;
+                 });
+
+                 topDecreases.forEach(item => {
+                     const label = item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                     recommendationsHtml += `
+                         <div class="p-3 rounded bg-green-900 border border-green-700">
+                             <p class="font-semibold text-green-200"><span class="font-bold text-lg">&darr;</span> ${label}</p>
+                             <p class="text-sm text-green-300">Decreased by <span class="font-bold">${Math.abs(item.delta).toFixed(0)} kg CO2e</span>. (Last: ${item.previous.toFixed(0)} kg, This: ${item.current.toFixed(0)} kg)</p>
+                         </div>
+                     `;
+                 });
+
+                 recommendationsHtml += '</div>';
+                 recommendationsContainer.innerHTML = recommendationsHtml;
+
+                // --- Prediction Section Setup (Simplified - No API Call) ---
+                 predictionContainer.innerHTML = `
+                     <button id="generate-prediction-btn" class="btn-primary w-full">
+                         <span>Generate Prediction (Demo)</span>
+                     </button>
+                     <div id="prediction-loading" class="hidden text-center text-slate-400">
+                         <div class="spinner mx-auto my-2"></div><p>Analyzing trends...</p>
+                     </div>
+                     <div id="prediction-error" class="hidden text-red-400 text-sm"></div>
+                     <div id="prediction-result" class="hidden space-y-3">
+                         <div class="bg-emerald-900 border-l-4 border-emerald-500 p-4 rounded-lg">
+                             <h3 class="text-sm font-medium text-emerald-300 uppercase tracking-wider">Predicted Total</h3>
+                             <p id="prediction-value" class="text-3xl font-extrabold text-emerald-100 mt-1">0.0 tCO2e</p>
+                         </div>
+                         <div class="bg-slate-700 p-4 rounded-lg">
+                             <h4 class="font-semibold text-slate-200">Rationale:</h4>
+                             <p id="prediction-rationale" class="text-sm text-slate-300 mt-1">...</p>
+                         </div>
+                     </div>`;
+                 document.getElementById('generate-prediction-btn').addEventListener('click', handlePredictionDemo);
             }
-            
-            recommendationsHtml += '<h4 class="text-lg font-semibold text-emerald-300 mt-6">Top Changes:</h4><div class="space-y-3">';
-            
-            const topIncreases = recs.topIncreases;
-            const topDecreases = recs.topDecreases;
 
-            if (topIncreases.length === 0 && topDecreases.length === 0) {
-                 recommendationsHtml += `<p class="text-slate-400">No significant changes in individual emission sources this week.</p>`;
-            }
-
-            topIncreases.forEach(item => {
-                const label = item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                recommendationsHtml += `
-                    <div class="p-3 rounded bg-red-900 border border-red-700">
-                        <p class="font-semibold text-red-200"><span class="font-bold text-lg">&uarr;</span> ${label}</p>
-                        <p class="text-sm text-red-300">Increased by <span class="font-bold">${item.delta.toFixed(0)} kg CO2e</span>. (Last week: ${item.previous.toFixed(0)} kg, This week: ${item.current.toFixed(0)} kg)</p>
-                    </div>
-                `;
-            });
-
-            topDecreases.forEach(item => {
-                const label = item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                recommendationsHtml += `
-                    <div class="p-3 rounded bg-green-900 border border-green-700">
-                        <p class="font-semibold text-green-200"><span class="font-bold text-lg">&darr;</span> ${label}</p>
-                        <p class="text-sm text-green-300">Decreased by <span class="font-bold">${Math.abs(item.delta).toFixed(0)} kg CO2e</span>. (Last week: ${item.previous.toFixed(0)} kg, This week: ${item.current.toFixed(0)} kg)</p>
-                    </div>
-                `;
-            });
-
-            recommendationsHtml += '</div>';
-            recommendationsContainer.innerHTML = recommendationsHtml;
+            // --- Monthly Report Button Setup ---
+             if (userData.length < 4) {
+                 reportContainer.innerHTML = `<p class="text-slate-400">Enter ${4 - userData.length} more week(s) of data to generate a monthly report.</p>`;
+             } else {
+                 reportContainer.innerHTML = `
+                     <button id="generate-report-btn" class="btn-primary w-full">
+                         <span>Generate Monthly Report</span>
+                     </button>`;
+                 document.getElementById('generate-report-btn').addEventListener('click', handleGenerateReport);
+             }
         }
 
-        // --- ADD DATA PAGE ---
+        // --- ADD DATA PAGE --- (Unchanged, uses localStorage)
         function renderAddDataPage() {
             if (!currentUser) {
                 navigateTo('page-login');
@@ -1444,13 +1675,15 @@
             // Reset form state
             resetAddDataForm();
             
-            // Set the default sector from the logged-in user
-            if (userSector) {
-                document.getElementById('sectorSelector').value = userSector;
-                showFormForSector(userSector);
+            // Use sector from currentUser object
+            const defaultSector = typeof currentUser === 'object' ? currentUser.sector : usersDB[currentUser];
+            if (defaultSector) {
+                document.getElementById('sectorSelector').value = defaultSector;
+                showFormForSector(defaultSector);
             }
         }
         
+        // --- Remaining Add Data Page functions (resetAddDataForm, showFormForSector, setupAddDataPage) are largely unchanged ---
         function resetAddDataForm() {
             // Hide results, show placeholder
             document.getElementById('resultsContainer').classList.add('hidden');
@@ -1462,13 +1695,9 @@
                 form.classList.add('hidden');
             });
             
-            // Reset sector selector but keep default
-            document.getElementById('sectorSelector').value = userSector || "";
-            if (userSector) {
-                showFormForSector(userSector);
-            } else {
-                 document.getElementById('saveButton').classList.add('hidden');
-            }
+            // Reset sector selector
+            document.getElementById('sectorSelector').value = "";
+            document.getElementById('saveButton').classList.add('hidden');
             
             // Destroy charts
             if (addDataScopeChart) addDataScopeChart.destroy();
@@ -1508,82 +1737,57 @@
                 showFormForSector(e.target.value);
             });
 
-            // Save button click
-            document.getElementById('saveButton').addEventListener('click', async () => {
-                const sector = sectorSelect.value;
-                const saveButton = document.getElementById('saveButton');
-                if (!sector) return;
-                
-                setButtonLoading(saveButton, true);
+             // Save button click (saves to localStorage)
+             document.getElementById('saveButton').addEventListener('click', () => {
+                 const saveButton = document.getElementById('saveButton'); // Get button
+                 const sector = sectorSelect.value;
+                 if (!sector) return;
 
-                let data = {};
-                let emissions = {};
-                let sectorName = sectorSelect.options[sectorSelect.selectedIndex].text;
+                 // Simulate loading
+                 saveButton.disabled = true;
+                 saveButton.innerHTML = '<div class="spinner"></div>';
 
-                switch (sector) {
-                    case 'manufacturing':
-                        data = getManufacturingData();
-                        emissions = calculateManufacturingEmissions(data);
-                        break;
-                    case 'retail':
-                        data = getRetailData();
-                        emissions = calculateRetailEmissions(data);
-                        break;
-                    case 'it':
-                        data = getItData();
-                        emissions = calculateItEmissions(data);
-                        break;
-                    case 'hospitality':
-                        data = getHospitalityData();
-                        emissions = calculateHospitalityEmissions(data);
-                        break;
-                    case 'healthcare':
-                        data = getHealthcareData();
-                        emissions = calculateHealthcareEmissions(data);
-                        break;
-                }
-                
-                // Display results on this page
-                displayAddDataResults(emissions, sectorName);
-                
-                // --- THIS IS THE NEW PART ---
-                // Save the data to our backend
-                const raw_inputs = getRawInputs(sector);
-                const newEntry = {
-                    date: new Date().toISOString().split('T')[0], // Get YYYY-MM-DD
-                    sector: sector,
-                    calculations: emissions,
-                    raw_inputs: raw_inputs
-                };
-                
-                try {
-                    const response = await fetch('/api/data', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            username: currentUser,
-                            entry: newEntry
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        // Show success modal
-                        showModal('success-modal');
-                    } else {
-                        const err = await response.json();
-                        alert(`Error saving data: ${err.message}`);
-                    }
-                } catch (error) {
-                    console.error('Error saving data:', error);
-                    alert('Network error. Could not save data.');
-                } finally {
-                    setButtonLoading(saveButton, false);
-                }
-            });
+                 let data = {};
+                 let emissions = {};
+                 let sectorName = sectorSelect.options[sectorSelect.selectedIndex].text;
+
+                 // Calculate emissions based on selected sector (logic unchanged)
+                 switch (sector) {
+                     case 'manufacturing': data = getManufacturingData(); emissions = calculateManufacturingEmissions(data); break;
+                     case 'retail': data = getRetailData(); emissions = calculateRetailEmissions(data); break;
+                     case 'it': data = getItData(); emissions = calculateItEmissions(data); break;
+                     case 'hospitality': data = getHospitalityData(); emissions = calculateHospitalityEmissions(data); break;
+                     case 'healthcare': data = getHealthcareData(); emissions = calculateHealthcareEmissions(data); break;
+                 }
+                 
+                 // Display results on this page
+                 displayAddDataResults(emissions, sectorName);
+                 
+                 // Create the entry to be saved
+                 const raw_inputs = getRawInputs(sector);
+                 const newEntry = {
+                     date: new Date().toISOString().split('T')[0], // Get YYYY-MM-DD
+                     sector: sector,
+                     calculations: emissions,
+                     raw_inputs: raw_inputs
+                 };
+                 
+                 // Save the data to localStorage
+                 userData.push(newEntry);
+                 saveUserData();
+                 
+                 // Show success modal after a short delay
+                 setTimeout(() => {
+                     document.getElementById('success-modal').classList.remove('hidden');
+                     // Reset button
+                     saveButton.disabled = false;
+                     saveButton.innerHTML = '<span>Calculate & Save Week\'s Data</span>';
+                 }, 300); // Short delay
+             });
             
             // Success modal OK button
             document.getElementById('success-ok-btn').addEventListener('click', () => {
-                hideModal('success-modal');
+                document.getElementById('success-modal').classList.add('hidden');
                 // Don't navigate away, let user click "Back"
             });
 
@@ -1610,24 +1814,484 @@
                 navigateTo('page-add');
             });
             
+            // Logout button
             document.getElementById('dashboard-logout-btn').addEventListener('click', () => {
                 currentUser = null;
-                userSector = null;
-                navigateTo('page-login');
+                userData = [];
+                document.getElementById('username').value = ''; // Clear login form
+                 document.getElementById('chat-float-button').classList.add('hidden'); // Hide chat button on logout
+                navigateTo('page-login'); // Go back to login
             });
         }
 
+        // ============================================
+        // --- ADDED: PREDICTION DEMO LOGIC ---
+        // ============================================
+        // This function simulates a prediction without an API call
+        function handlePredictionDemo() {
+             if (userData.length < 2) return; // Need at least 2 data points
+
+             const predictButton = document.getElementById('generate-prediction-btn');
+             const loadingEl = document.getElementById('prediction-loading');
+             const resultEl = document.getElementById('prediction-result');
+             const errorEl = document.getElementById('prediction-error');
+
+             // Ensure elements exist before manipulating
+             if (!predictButton || !loadingEl || !resultEl || !errorEl) {
+                 console.error("Prediction UI elements not found.");
+                 return;
+             }
+
+             predictButton.classList.add('hidden');
+             resultEl.classList.add('hidden');
+             errorEl.classList.add('hidden');
+             loadingEl.classList.remove('hidden');
+
+             // Simple prediction: Average of last two weeks or slight trend extrapolation
+             const lastWeek = userData[userData.length - 1].calculations.totals.total;
+             const prevWeek = userData[userData.length - 2].calculations.totals.total;
+             const trend = lastWeek - prevWeek;
+             let predictionKg = lastWeek + (trend * 0.5); // Predict half the trend continues
+             if (predictionKg < 0) predictionKg = lastWeek * 0.9; // If negative, predict 10% decrease
+
+             // Simulate delay
+             setTimeout(() => {
+                 document.getElementById('prediction-value').innerText = `${(predictionKg / 1000).toFixed(2)} tCO2e`;
+                 let rationale = `Based on the trend from the last two weeks (${prevWeek.toFixed(0)} kg -> ${lastWeek.toFixed(0)} kg), emissions are predicted to be around ${predictionKg.toFixed(0)} kg.`;
+                 if (trend < 0) rationale += " Keep up the good work!";
+                 else if (trend > 0) rationale += " Consider focusing on the areas that increased recently.";
+                 document.getElementById('prediction-rationale').innerText = rationale;
+
+                 loadingEl.classList.add('hidden');
+                 resultEl.classList.remove('hidden');
+                 // Keep button hidden after successful prediction
+             }, 1000); // 1 second delay
+         }
+
+         // ============================================
+         // --- ADDED: MONTHLY REPORT LOGIC ---
+         // ============================================
+         async function handleGenerateReport(isRegenerate = false) {
+             if (userData.length < 4 || !currentUser) return;
+
+             const reportModal = document.getElementById('report-modal');
+             const reportContentEl = document.getElementById('report-content');
+             const reportLoadingEl = document.getElementById('report-loading');
+             const reportErrorEl = document.getElementById('report-error');
+             const regenerateBtn = document.getElementById('report-regenerate-btn');
+             const generateBtn = document.getElementById('generate-report-btn'); // Original button
+
+             reportModal.classList.remove('hidden');
+             reportContentEl.textContent = ''; // Clear previous content
+             reportErrorEl.classList.add('hidden');
+             reportLoadingEl.classList.remove('hidden');
+             regenerateBtn.classList.add('hidden'); // Hide regenerate initially
+             if (generateBtn) generateBtn.disabled = true; // Disable original button during generation
+
+             try {
+                 const reportData = userData.slice(-4); // Get last 4 weeks
+                 const dataSummary = reportData.map(entry => ({
+                     date: entry.date,
+                     total_kg: entry.calculations.totals.total.toFixed(0),
+                     scope1_kg: entry.calculations.totals.scope1.toFixed(0),
+                     scope2_kg: entry.calculations.totals.scope2.toFixed(0),
+                     scope3_kg: entry.calculations.totals.scope3.toFixed(0),
+                     // Optional: Add top 1-2 sources if needed, but keep it concise
+                 }));
+
+                  // Ensure currentUser has the sector property
+                 const sectorName = (typeof currentUser === 'object' && currentUser.sector) 
+                                      ? forms[currentUser.sector]?.name || currentUser.sector 
+                                      : 'Unknown'; // Fallback if sector info is missing
+
+
+                 const systemPrompt = `You are a carbon analyst. Generate a concise monthly summary report (approx 4-6 paragraphs) based on the last 4 weeks of CO2e emissions data (in kg) for a company in India. Analyze trends, highlight key emission scopes/sources, point out significant changes (increases/decreases), and provide 1-2 actionable recommendations specific to their sector (${sectorName}). Use clear headings (e.g., "**Summary**", "**Key Trends**", "**Recommendations**") and markdown formatting. Data format: [{date, total_kg, scope1_kg, scope2_kg, scope3_kg}, ...]. Current date: ${new Date().toISOString().split('T')[0]}.`;
+                 const userQuery = `Generate the monthly report based on this data:\n${JSON.stringify(dataSummary)}`;
+                 
+                 // --- Direct Gemini API Call ---
+                 // WARNING: API Key exposed in frontend. Use a backend proxy in production.
+                 const apiKey = ""; // Leave empty - provided by environment
+                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                 const payload = {
+                     contents: [{ parts: [{ text: userQuery }] }],
+                     systemInstruction: { parts: [{ text: systemPrompt }] },
+                 };
+
+                  // --- API call with exponential backoff ---
+                 let response;
+                 let attempts = 0;
+                 const maxAttempts = 5;
+                 let delay = 1000; 
+
+                 while (attempts < maxAttempts) {
+                      try {
+                          response = await fetch(apiUrl, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload)
+                          });
+
+                          if (response.ok) break; 
+                          else if (response.status === 429 || response.status >= 500) {
+                              console.warn(`API call failed (Report): ${response.status}. Retrying in ${delay / 1000}s...`);
+                              await new Promise(resolve => setTimeout(resolve, delay));
+                              delay *= 2; 
+                              attempts++;
+                          } else {
+                              let errorMsg = `API Error (Report): ${response.status}`;
+                              try { const errorData = await response.json(); errorMsg = errorData.error?.message || errorMsg; } catch(e) {}
+                              throw new Error(errorMsg); 
+                          }
+                      } catch (networkError) {
+                           console.warn(`Network error (Report): ${networkError}. Retrying in ${delay / 1000}s...`);
+                           await new Promise(resolve => setTimeout(resolve, delay));
+                           delay *= 2;
+                           attempts++;
+                           if (attempts >= maxAttempts) throw networkError;
+                      }
+                 }
+                  if (!response || !response.ok) throw new Error(`API call failed (Report) after ${maxAttempts} attempts.`);
+                 // --- End API call ---
+
+                 const result = await response.json();
+                 const reportText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Could not generate report content.";
+
+                 reportContentEl.textContent = reportText; // Display using textContent within <pre>
+                 regenerateBtn.classList.remove('hidden'); // Show regenerate button
+
+             } catch (error) {
+                 console.error("Report generation error:", error);
+                 reportErrorEl.textContent = `Error generating report: ${error.message}`;
+                 reportErrorEl.classList.remove('hidden');
+                 regenerateBtn.classList.remove('hidden'); // Allow retry on error
+             } finally {
+                 reportLoadingEl.classList.add('hidden');
+                  if (generateBtn) generateBtn.disabled = false; // Re-enable original button
+             }
+         }
+
+         function copyReportToClipboard() {
+             const reportText = document.getElementById('report-content').textContent;
+             const copyStatus = document.getElementById('copy-status');
+             if (navigator.clipboard && window.isSecureContext) { // Modern way
+                 navigator.clipboard.writeText(reportText).then(() => {
+                     copyStatus.classList.remove('hidden');
+                     setTimeout(() => copyStatus.classList.add('hidden'), 2000);
+                 }).catch(err => {
+                     console.error('Async clipboard copy failed:', err);
+                     // Fallback below
+                     fallbackCopyTextToClipboard(reportText, copyStatus);
+                 });
+             } else { // Fallback 
+                fallbackCopyTextToClipboard(reportText, copyStatus);
+             }
+         }
+         
+         // Fallback copy function using document.execCommand
+         function fallbackCopyTextToClipboard(text, statusElement) {
+             const textArea = document.createElement("textarea");
+             textArea.value = text;
+             textArea.style.position = "fixed"; 
+             textArea.style.left = "-9999px";
+             document.body.appendChild(textArea);
+             textArea.focus();
+             textArea.select();
+             try {
+                 document.execCommand('copy');
+                 statusElement.textContent = "Report copied!";
+                 statusElement.classList.remove('hidden', 'text-red-400');
+                 statusElement.classList.add('text-green-400');
+                 setTimeout(() => statusElement.classList.add('hidden'), 2000);
+             } catch (err) {
+                 console.error('Fallback copy failed:', err);
+                 statusElement.textContent = "Copy failed!";
+                 statusElement.classList.remove('hidden', 'text-green-400');
+                 statusElement.classList.add('text-red-400');
+                 setTimeout(() => {
+                      statusElement.classList.add('hidden');
+                      statusElement.textContent = "Report copied!"; // Reset text
+                      statusElement.classList.remove('text-red-400');
+                      statusElement.classList.add('text-green-400');
+                 }, 2000);
+             }
+             document.body.removeChild(textArea);
+         }
+
 
         // ============================================
-        // INITIALIZATION
+        // --- ADDED: WEEKLY REWARD LOGIC ---
+        // ============================================
+        async function handleGenerateReward(reductionAmount) {
+             const rewardContainer = document.getElementById('weekly-reward-container');
+             if (!currentUser || !rewardContainer) return;
+
+             rewardContainer.classList.remove('hidden');
+             rewardContainer.innerHTML = `<div class="flex items-center gap-2 text-slate-400"><div class="spinner"></div> Generating weekly feedback...</div>`;
+
+            try {
+                 // Ensure currentUser has the sector property
+                 const sectorName = (typeof currentUser === 'object' && currentUser.sector) 
+                                      ? forms[currentUser.sector]?.name || currentUser.sector 
+                                      : 'Unknown'; // Fallback
+
+                 const systemPrompt = `You are an encouraging environmental coach. A company in the ${sectorName} sector in India reduced their weekly CO2e emissions. Generate a short (1-2 sentences), positive, and motivating reward message or creative badge title suitable for their sector, acknowledging their reduction of approximately ${reductionAmount.toFixed(0)} kg CO2e. Be creative and sector-aware. Example: For IT, "Code Green Champion!"; For Retail, "Sustainable Shelves Award!".`;
+                 const userQuery = `Generate the reward message/title.`;
+
+                 // --- Direct Gemini API Call ---
+                  // WARNING: API Key exposed in frontend. Use a backend proxy in production.
+                 const apiKey = ""; // Leave empty - provided by environment
+                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                 const payload = {
+                     contents: [{ parts: [{ text: userQuery }] }],
+                     systemInstruction: { parts: [{ text: systemPrompt }] },
+                      generationConfig: { maxOutputTokens: 50 } // Keep it short
+                 };
+
+                 // --- API call with exponential backoff ---
+                 let response;
+                 let attempts = 0;
+                 const maxAttempts = 5;
+                 let delay = 1000; 
+
+                 while (attempts < maxAttempts) {
+                      try {
+                          response = await fetch(apiUrl, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload)
+                          });
+
+                          if (response.ok) break; 
+                          else if (response.status === 429 || response.status >= 500) {
+                               console.warn(`API call failed (Reward): ${response.status}. Retrying in ${delay / 1000}s...`);
+                              await new Promise(resolve => setTimeout(resolve, delay));
+                              delay *= 2; 
+                              attempts++;
+                          } else {
+                              let errorMsg = `API Error (Reward): ${response.status}`;
+                              try { const errorData = await response.json(); errorMsg = errorData.error?.message || errorMsg; } catch(e) {}
+                              throw new Error(errorMsg); 
+                          }
+                      } catch (networkError) {
+                            console.warn(`Network error (Reward): ${networkError}. Retrying in ${delay / 1000}s...`);
+                           await new Promise(resolve => setTimeout(resolve, delay));
+                           delay *= 2;
+                           attempts++;
+                           if (attempts >= maxAttempts) throw networkError;
+                      }
+                 }
+                  if (!response || !response.ok) throw new Error(`API call failed (Reward) after ${maxAttempts} attempts.`);
+                 // --- End API call ---
+
+                 const result = await response.json();
+                 const rewardText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Keep up the great work on reducing emissions!";
+
+                 rewardContainer.innerHTML = `
+                     <div class="p-4 rounded-lg bg-yellow-700 border border-yellow-500 text-center">
+                         <p class="text-lg font-semibold text-yellow-200">🏆 Weekly Progress Reward! 🏆</p>
+                         <p class="text-yellow-300 mt-1">${rewardText.trim()}</p>
+                     </div>
+                 `;
+
+             } catch (error) {
+                 console.error("Reward generation error:", error);
+                 // Display a fallback message instead of the error
+                 rewardContainer.innerHTML = `
+                      <div class="p-4 rounded-lg bg-yellow-700 border border-yellow-500 text-center">
+                         <p class="text-lg font-semibold text-yellow-200">🏆 Weekly Progress Reward! 🏆</p>
+                         <p class="text-yellow-300 mt-1">Excellent job reducing emissions this week!</p>
+                     </div>`;
+             }
+         }
+
+
+         // ============================================
+         // --- ADDED: CHATBOT LOGIC ---
+         // ============================================
+        
+        const chatMessages = document.getElementById('chat-messages'); // Get chat message container
+        
+        // Function to add a message bubble to the chat window
+        function addChatMessage(message, sender) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('chat-bubble');
+            
+            if (sender === 'user') {
+                bubble.classList.add('chat-bubble-user');
+                bubble.textContent = message; // Simple text for user message
+            } else { // 'bot' or 'error'
+                bubble.classList.add('chat-bubble-bot');
+                 // Simple markdown-to-HTML for bot response (bold, italics, basic lists, code blocks)
+                 let html = message
+                     .replace(/```(json|python|text)?\s*([\s\S]*?)\s*```/g, (match, lang, code) => `<pre><code class="language-${lang || 'text'}">${code.trim()}</code></pre>`) // Code blocks
+                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                     .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
+                     // Handle unordered lists more robustly
+                     .replace(/^\s*[-*+]\s+(.*)/gm, '<ul><li>$1</li></ul>') 
+                     .replace(/<\/ul>\s*<ul>/g, '') // Merge adjacent lists
+                     // Handle ordered lists
+                     .replace(/^\s*\d+\.\s+(.*)/gm, '<ol><li>$1</li></ol>')
+                     .replace(/<\/ol>\s*<ol>/g, ''); // Merge adjacent ordered lists
+                     
+                 // Wrap loose list items if not already wrapped
+                 html = html.replace(/<\/li>\s*<li>/g, '</li><li>'); 
+                 if (!html.startsWith('<ul>') && html.includes('<li>') && !html.includes('<ol>')) {
+                    // Basic check, might need refinement
+                 }
+                  if (!html.startsWith('<ol>') && html.includes('<li>') && !html.includes('<ul>')) {
+                     // Basic check, might need refinement
+                 }
+
+
+                bubble.innerHTML = html.trim() || "Sorry, I couldn't process that."; // Set innerHTML for bot response
+            }
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to the bottom
+        }
+        
+        // Function to handle sending a chat message
+        async function handleChatSend(e) {
+            e.preventDefault(); // Prevent form submission reloading page
+            const input = document.getElementById('chat-input');
+            const sendButton = document.getElementById('chat-send-btn');
+            const message = input.value.trim();
+            
+            // Need a message and logged-in user with data
+            if (!message || !currentUser || userData.length === 0) {
+                 // Optionally show a message if there's no data
+                 if(userData.length === 0) {
+                     addChatMessage("Please add some weekly data before asking questions.", 'bot');
+                 }
+                 return;
+             }
+
+            addChatMessage(message, 'user'); // Add user message to chat
+            input.value = ''; // Clear input field
+            
+            // Show loading indicator
+            const loadingBubble = document.createElement('div');
+            loadingBubble.classList.add('chat-bubble', 'chat-bubble-bot');
+            loadingBubble.innerHTML = '<div class="spinner"></div>';
+            chatMessages.appendChild(loadingBubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            sendButton.disabled = true; // Disable send button while processing
+
+            // --- Gemini API Call ---
+            try {
+                 // Prepare data summary for the prompt
+                const recentHistory = userData.slice(-5); // Use last 5 weeks for context
+                const dataSummary = recentHistory.map(entry => ({
+                     date: entry.date,
+                     total_kg: entry.calculations.totals.total.toFixed(0),
+                     scope1_kg: entry.calculations.totals.scope1.toFixed(0),
+                     scope2_kg: entry.calculations.totals.scope2.toFixed(0),
+                     scope3_kg: entry.calculations.totals.scope3.toFixed(0),
+                 }));
+                
+                 // Ensure currentUser has the sector property
+                 const sectorName = (typeof currentUser === 'object' && currentUser.sector) 
+                                      ? forms[currentUser.sector]?.name || currentUser.sector 
+                                      : 'Unknown'; // Fallback
+
+                const systemPrompt = `You are a helpful carbon footprint Analyzer. Analyze the provided weekly CO2e emissions data (in kg) from a company in India (sector: ${sectorName}) and answer the user's question concisely based *only* on this data. Format responses clearly using markdown (bold, lists, code blocks for data examples). Data format: [{date, total_kg, scope1_kg, scope2_kg, scope3_kg}, ...]. Current date: ${new Date().toISOString().split('T')[0]}.`;
+                const userQuery = `Here is the recent weekly emissions data:\n\`\`\`json\n${JSON.stringify(dataSummary, null, 2)}\n\`\`\`\n\nUser Question: ${message}`;
+                
+                // WARNING: API Key exposed in frontend. Use a backend proxy in production.
+                const apiKey = ""; // Leave empty - provided by environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                     systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                 // --- API call with exponential backoff ---
+                 let response;
+                 let attempts = 0;
+                 const maxAttempts = 5;
+                 let delay = 1000; 
+
+                 while (attempts < maxAttempts) {
+                     try {
+                         response = await fetch(apiUrl, {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify(payload)
+                         });
+
+                         if (response.ok) break; 
+                         else if (response.status === 429 || response.status >= 500) {
+                              console.warn(`API call failed (Chat): ${response.status}. Retrying in ${delay / 1000}s...`);
+                             await new Promise(resolve => setTimeout(resolve, delay));
+                             delay *= 2; 
+                             attempts++;
+                         } else {
+                             let errorMsg = `API Error (Chat): ${response.status}`;
+                             try { const errorData = await response.json(); errorMsg = errorData.error?.message || errorMsg; } catch(e) {}
+                             throw new Error(errorMsg); 
+                         }
+                     } catch (networkError) {
+                          console.warn(`Network error (Chat): ${networkError}. Retrying in ${delay / 1000}s...`);
+                           await new Promise(resolve => setTimeout(resolve, delay));
+                           delay *= 2;
+                           attempts++;
+                           if (attempts >= maxAttempts) throw networkError;
+                     }
+                 }
+                  if (!response || !response.ok) throw new Error(`API call failed (Chat) after ${maxAttempts} attempts.`);
+                 // --- End API call ---
+
+
+                const result = await response.json();
+                const botResponseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get a valid response.";
+
+                 chatMessages.removeChild(loadingBubble); // Remove spinner
+                 addChatMessage(botResponseText, 'bot'); // Add Gemini's response
+
+            } catch (error) {
+                console.error("Chatbot API error:", error);
+                 if (chatMessages.contains(loadingBubble)) { // Check if loading bubble still exists
+                     chatMessages.removeChild(loadingBubble);
+                 }
+                 addChatMessage(`Sorry, I encountered an error: ${error.message}`, 'bot');
+            } finally {
+                sendButton.disabled = false; // Re-enable send button
+            }
+        }
+        
+        // Function to set up chatbot event listeners
+        function setupChatbot() {
+            const floatButton = document.getElementById('chat-float-button');
+            const modal = document.getElementById('chatbot-modal');
+            const closeButton = document.getElementById('chat-close-btn');
+            const chatForm = document.getElementById('chat-form');
+
+            floatButton.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeButton.addEventListener('click', () => modal.classList.add('hidden'));
+            chatForm.addEventListener('submit', handleChatSend);
+        }
+         // --- End Chatbot logic ---
+
+
+        // ============================================
+        // INITIALIZATION (MODIFIED)
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
-            // No data to load, backend handles it
+            loadUsersDB(); // Load users from localStorage
             
             setupLoginPage();
             setupAddDataPage();
             setupDashboardNav();
+            setupChatbot(); // Setup chatbot listeners
             
+             // --- ADDED: Report Modal Listeners ---
+             document.getElementById('report-close-btn').addEventListener('click', () => {
+                 document.getElementById('report-modal').classList.add('hidden');
+             });
+             document.getElementById('report-copy-btn').addEventListener('click', copyReportToClipboard);
+              document.getElementById('report-regenerate-btn').addEventListener('click', () => handleGenerateReport(true)); // Pass flag
+             // --- End Report Listeners ---
+
             // Start at the login page
             navigateTo('page-login');
         });
